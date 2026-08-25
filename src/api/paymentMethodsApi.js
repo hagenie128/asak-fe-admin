@@ -1,11 +1,22 @@
+import { apiClient } from "./apiClient.js";
+import { API_ENDPOINTS } from "../constants/api.js";
 /**
- * 결제수단 API — 미구현 셸.
- * 화면: usePaymentMethodDraft → mocks/adminMockRepository
- * BE 구현 순서: TODO-011 Controller → TODO-012 Service/Mapper → TODO-013 이 파일 → TODO-014 draft 훅.
- * 현재 Controller 기준 경로는 `/api/admin/paymentMethods`(camelCase)다. Product Bible의 kebab-case 표기와
- * 다르면 호출 전에 정본을 확정하고 Admin endpoint 상수·Controller·문서를 같은 값으로 맞춘다.
+ * 결제수단 API — GET/PATCH 호출 구현됨, 실 API 검증 대기.
+ * 화면: usePaymentMethodDraft → paymentMethodsApi → apiClient
+ * Backend Controller·Service·Mapper 구현과 Admin build는 확인했다.
+ * 단, 현재 API_BASE_PATH(`/admin`)와 Backend 경로(`/api/admin/paymentMethods`)가 달라
+ * 경로 정렬 및 GET/PATCH 실응답 확인 전에는 실연동 완료가 아니다.
  */
 export const paymentMethodsApi = {
-  // TODO-013: GET 목록과 PATCH /{paymentMethodId}를 API_ENDPOINTS.paymentMethods 기반으로 추가한다.
-  // PATCH body와 성공 data shape를 TODO-012 DTO에 맞추고, 0건·409·검증 실패를 throw/catch 흐름으로 확인한다.
+  // TODO-013 [코드 연결 완료 · 실 API 검증 대기]: GET 목록과 PATCH /{paymentMethodId}는 API_ENDPOINTS를 사용한다.
+  // PATCH body는 active, sortNo다. 없는 id·유효하지 않은 요청·0건 갱신의 오류 전달과
+  // 여러 행 순서 변경의 순차 PATCH 결과는 실제 Backend 응답으로 확인해야 한다.
+  listPaymentMethods() {
+    return apiClient.get(API_ENDPOINTS.paymentMethods);
+  },
+  updatePaymentMethod(methodId, { active, sortNo }) {
+    return apiClient
+      .patch(API_ENDPOINTS.paymentMethod(methodId), { active, sortNo })
+      .then(() => ({ success: true }));
+  },
 };

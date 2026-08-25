@@ -16,18 +16,18 @@ function readSession() {
 }
 
 export function isAdminLoggedIn() {
-  // TODO-032: TODO-031의 access token 존재·만료·파싱 실패를 기준으로 세션을 판정한다.
-  // 단순 loggedIn 플래그는 JWT 인증 전 임시 mock 호환용이며, 만료 토큰을 로그인 상태로 취급하지 않는다.
+  // TODO-032 [코드 연결 완료 · 로그인 실응답 검증 대기]: LoginPage가 approved === true일 때만
+  // loggedIn 플래그를 저장한다. 이번 범위는 JWT를 사용하지 않으므로 token·만료·파싱 로직은 추가하지 않는다.
   return Boolean(readSession()?.loggedIn);
 }
 
 export function loginAdmin({ remember = false } = {}) {
-  // TODO-032: adminApi.login 응답의 token/expiry를 저장한다. remember=true는 localStorage,
-  // false는 sessionStorage를 사용하고, 원문 password·민감 응답은 저장하지 않는다.
+  // TODO-032: 승인 결과만 저장한다. remember=true는 localStorage, false는 sessionStorage를 사용하며
+  // 매장 번호와 민감 응답은 저장하지 않는다. 호출부의 approved 검사 없이 이 함수를 직접 호출하지 않는다.
   logoutAdmin();
   const payload = {
     loggedIn: true,
-    loggedInAt: new Date().toISOString(),
+    // loggedInAt: new Date().toISOString(),
     remember: Boolean(remember),
   };
   const store = remember ? localStorage : sessionStorage;

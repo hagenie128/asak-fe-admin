@@ -12,6 +12,8 @@ import loginLogo from "../../assets/svg/logo-F.svg";
 import loginBg from "../../assets/figma/login-bg.png";
 import { loginAdmin } from "../../auth/adminSession.js";
 import { requestAppFullscreen } from "../../utils/fullscreen.js";
+import { toast } from "../../utils/toast.js";
+import { adminApi } from "../../api/adminApi.js";
 
 export default function LoginPage({ onLoggedIn } = {}) {
   const [remember, setRemember] = useState(false);
@@ -23,16 +25,25 @@ export default function LoginPage({ onLoggedIn } = {}) {
     setSubmitting(true);
     try {
       // 태블릿 Chrome: 로그인 터치 = 사용자 제스처 → 주소창 숨김 전체화면
-      await requestAppFullscreen();
-      // TODO-034: TODO-031 login API 완료 후 adminApi.login → token 전달(loginAdmin 교체) 순서로 연결한다.
-      // submitting 중 중복 요청을 막고, 401은 비밀번호 오류 안내로 표시하며 네트워크 오류와 구분한다.
-      loginAdmin({ remember });
-      onLoggedIn?.();
+      if (window.innerHeight < 768) {
+        //가로모드인 경우
+        await requestAppFullscreen();
+      }
+      // TODO-034 [코드 연결 완료 · 실 API 검증 대기]: storeNumber → adminApi.login → approved 검사 → loginAdmin 순서다.
+      // API_BASE_PATH 정렬 후 중복 요청, 잘못된 매장 번호·빈 입력·네트워크 오류를 실제 응답으로 구분해 수동 QA한다.
+      const storeNumber = event.target.storeNumber.value;
+      const result = await adminApi.login(storeNumber);
+      if (result.approved === true) {
+        loginAdmin({ remember });
+        onLoggedIn?.();
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error(e.message || "로그인에 실패했습니다.");
     } finally {
       setSubmitting(false);
     }
   }
-
   return (
     <main className="admin-login-page">
       <img className="admin-login-page__photo" alt="" aria-hidden="true" src={loginBg} />
@@ -47,6 +58,10 @@ export default function LoginPage({ onLoggedIn } = {}) {
 
         <form className="admin-login-card__form" onSubmit={handleSubmit}>
           <label className="admin-login-field">
+            <span>매장 번호</span>
+            <input name="storeNumber" placeholder="0001" autoComplete="storeNumber" />
+          </label>
+          {/* <label className="admin-login-field">
             <span>아이디</span>
             <input name="username" defaultValue="admin_asak" autoComplete="username" />
           </label>
@@ -58,7 +73,7 @@ export default function LoginPage({ onLoggedIn } = {}) {
               defaultValue="password"
               autoComplete="current-password"
             />
-          </label>
+          </label> */}
 
           <label className="admin-login-card__check">
             <input

@@ -25,19 +25,19 @@ const POLICIES = [
 ];
 
 function PreviewRow({ method }) {
-  const iconUrl = getPaymentMethodIconUrl(method.methodId, method.iconUrl);
+  const imageUrl = method.imageUrl ?? getPaymentMethodIconUrl(method.methodCode);
 
   return (
     <div className="payment-preview-row">
       <span className="payment-method-row__icon" aria-hidden="true">
-        {iconUrl ? <img src={iconUrl} alt="" /> : null}
+        {imageUrl ? <img src={imageUrl} alt="" /> : null}
       </span>
       <div className="payment-method-row__info">
-        <strong>{method.name}</strong>
+        <strong>{method.methodName}</strong>
         <span>{method.description}</span>
       </div>
       <span
-        className={`payment-toggle${method.isActive ? "" : " payment-toggle--off"}`}
+        className={`payment-toggle${method.active ? "" : " payment-toggle--off"}`}
         aria-hidden="true"
       >
         <i />
@@ -115,7 +115,7 @@ export default function PaymentMethodPage() {
                 <AdminPaymentMethodRow
                   key={method.methodId}
                   method={method}
-                  disabled={draft.isSaving}
+                  disabled={draft.isUpdating}
                   canMoveUp={index > 0}
                   canMoveDown={index < draft.rows.length - 1}
                   onToggle={() => draft.toggleMethod(method.methodId)}
@@ -163,7 +163,7 @@ export default function PaymentMethodPage() {
       </div>
       <AdminSaveBar
         isDirty={draft.isDirty}
-        isSaving={draft.isSaving}
+        isSaving={draft.isUpdating}
         onSave={() => setSaveConfirmOpen(true)}
       />
       <AdminConfirmDialog
@@ -173,7 +173,7 @@ export default function PaymentMethodPage() {
         confirmLabel="저장하기"
         cancelLabel="취소"
         tone="warning"
-        isBusy={draft.isSaving}
+        isBusy={draft.isUpdating}
         onConfirm={handleSaveConfirm}
         onCancel={() => setSaveConfirmOpen(false)}
       />

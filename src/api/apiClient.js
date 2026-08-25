@@ -15,6 +15,7 @@ export const apiClient = axios.create({
 
 // TODO-033: TODO-031 로그인 응답의 access token을 단일 세션 읽기 함수로 가져와
 // Authorization: Bearer <token>을 붙인다. 로그인·토큰 없는 공개 요청에는 빈 헤더를 보내지 않는다.
+
 // TODO-033: 401은 토큰 삭제 후 로그인 화면으로 이동하되, 호출 컴포넌트가 중복 toast를 만들지 않게
 // 공통 처리 범위를 먼저 정한다.
 // TODO-037: 403·409·검증 실패는 ApiResponse의 code/message를 보존해 화면별 안내와 매핑한다.

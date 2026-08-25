@@ -122,8 +122,9 @@ export default function OrderManagePage() {
       dateTo: range.to,
     }));
   }
-  // TODO-042: backend TODO-038/039 및 frontend TODO-040 완료 후 ordersApi.refundOrder + ConfirmDialog를 연결한다.
-  // 승인 결제만 환불 가능한지와 409/이미 환불됨 응답을 구분하고, 성공 뒤에는 이 훅의 refetch()로 목록을 갱신한다.
+  // TODO-042: backend TODO-038/039 및 frontend TODO-040 완료 후 실제 ordersApi.orderRefund + ConfirmDialog를 연결한다.
+  // 카드/신용카드는 이번 범위다. 토스페이는 실제 연동·결제 과정 통합 테스트가 성공할 때만 노출·처리하며,
+  // 승인 결제만 환불 가능한지와 409/이미 환불됨 응답을 구분하고 성공 뒤 refetch()로 목록을 갱신한다.
   function handleRefund(orderId) {
     setConfirmDialog({
       title: "환불하시겠습니까?",

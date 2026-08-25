@@ -4,27 +4,26 @@
  * DB 정본 URL은 media_asset.url (asak/payment/*)
  */
 export const PAYMENT_METHOD_ICON_URLS = {
-  card: "/samsung-pay.svg",
-  kakao: "/kakaopay.svg",
-  naver: "/badge_npay.svg",
-  toss: "/toss-logo.svg",
+  CARD: "/samsung-pay.svg",
+  KAKAO_PAY: "/kakaopay.svg",
+  NAVER_PAY: "/badge_npay.svg",
+  TOSS_PAY: "/toss-logo.svg",
+  ZERO_PAY: "/zero-pay.svg",
 };
 
 /** @deprecated emoji 글리프 → iconUrl 사용. 폴백만 유지 */
 export const PAYMENT_METHOD_GLYPHS = {
-  card: "💳",
-  kakao: "🟡",
-  naver: "🟢",
-  toss: "🔵",
-  zero: "🔵",
+  CARD: "💳",
+  KAKAO_PAY: "🟡",
+  NAVER_PAY: "🟢",
+  TOSS_PAY: "🔵",
+  ZERO_PAY: "🔵",
 };
 
-export function getPaymentMethodIconUrl(methodId, iconUrl) {
-  // methodId 매핑을 우선 — Cloudinary attachment URL 폴백 방지
-  const mapped = PAYMENT_METHOD_ICON_URLS[methodId];
-  if (mapped) return mapped;
-  if (iconUrl && !iconUrl.includes("res.cloudinary.com")) return iconUrl;
-  return iconUrl ?? null;
+export function getPaymentMethodIconUrl(methodCode) {
+  const url = PAYMENT_METHOD_ICON_URLS[methodCode];
+  if (url && !url.includes("res.cloudinary.com")) return url;
+  return null;
 }
 
 export function getPaymentMethodGlyph(methodId) {

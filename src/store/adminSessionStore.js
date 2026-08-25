@@ -1,7 +1,7 @@
 /*
- * [미연결] JWT용 zustand 후보.
+ * [미연결] Zustand 세션 후보. 이번 매장 번호 승인 범위에서는 사용하지 않는다.
  * 실행 중 세션 정본: auth/adminSession.js
- * TODO-032: adminSession.js와 accessToken·expiresAt·remember 세션 스키마를 통일한 뒤 인증에 연결한다.
+ * TODO-032: JWT 세션을 도입하지 않고 auth/adminSession.js의 loggedIn 경계를 유지한다.
  * storage 변경은 이 store와 직접 섞지 않고 auth/adminSession.js를 단일 읽기·쓰기 경계로 유지한다.
  */
 
