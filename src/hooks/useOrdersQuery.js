@@ -39,7 +39,7 @@ export function useOrdersQuery({ pageSize = ADMIN_PAGINATION.orders.pageSize, fi
 
       try {
         // apiClient가 envelope을 풀어 PageResult({ content, totalElements, ... })만 반환
-        const result = await ordersApi.listOrders({
+        const result = await ordersApi.orderList({
           page,
           size: pageSize,
           orderStatus,

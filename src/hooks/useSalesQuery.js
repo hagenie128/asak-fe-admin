@@ -11,7 +11,7 @@ import {
 } from "../adapters/salesAdapter.js";
 import { salesApi } from "../api/salesApi.js";
 
-// TODO-022 (구현 완료): mode별 API 결과를 adapter로 바꾸고 useEffect cleanup으로 오래된 응답의 state 반영을 막는다.
+// mode별 API 결과를 adapter로 바꾸고 useEffect cleanup으로 오래된 응답의 state 반영을 막는다.
 // QA: 기간을 빠르게 바꿀 때 loading/error/empty가 각 화면에서 올바르게 보이는지 브라우저에서 확인한다.
 /**
  * @param {object} [options]
@@ -20,6 +20,7 @@ import { salesApi } from "../api/salesApi.js";
  * @param {string} [options.startDate] summary 직접 조회 시작일(ISO)
  * @param {string} [options.endDate] summary 직접 조회 종료일(ISO)
  * @param {number} [options.year] monthly 조회 연도
+ * @param {number} [options.month] monthly 랭킹을 조회할 달(1~12). 없으면 서버가 최근 달을 쓴다.
  * @param {string} [options.from] daily 조회 시작일(ISO)
  * @param {string} [options.to] daily 조회 종료일(ISO)
  */
@@ -29,6 +30,7 @@ export function useSalesQuery({
   startDate,
   endDate,
   year,
+  month,
   from,
   to,
 } = {}) {
@@ -68,7 +70,7 @@ export function useSalesQuery({
 
     const request =
       mode === "monthly"
-        ? salesApi.getMonthly({ year })
+        ? salesApi.getMonthly({ year, month })
         : mode === "daily"
           ? salesApi.getDaily({ from, to })
           : Promise.reject(new Error("Invalid mode"));
@@ -90,7 +92,7 @@ export function useSalesQuery({
     return () => {
       cancelled = true;
     };
-  }, [mode, period, startDate, endDate, year, from, to, requestVersion]);
+  }, [mode, period, startDate, endDate, year, month, from, to, requestVersion]);
 
   return {
     status,

@@ -1,6 +1,6 @@
 /**
  * Admin 품절 화면 데이터 형태.
- * TODO-007~010 구현 기준: GET /api/admin/soldOut 카탈로그와 useSoldOutDraft를 사용한다.
+ * GET /api/admin/soldOut 카탈로그와 useSoldOutDraft를 사용한다.
  * PATCH changes는 targetType/targetId/isSoldOut로 전송하며, UI draft와 서버 baseline을 분리해 실패 시 baseline으로 복원한다.
  * API는 MENU/INGREDIENT/OPTION_ITEM을 반환하지만 현재 화면은 MENU/INGREDIENT 탭만 노출한다.
  *

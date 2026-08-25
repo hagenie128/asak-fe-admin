@@ -252,7 +252,7 @@ export default function LiveOrderBoard() {
     if (showLoading) setStatus("loading");
 
     try {
-      const liveBoard = await ordersApi.listLiveOrders();
+      const liveBoard = await ordersApi.liveOrderList();
       const content = liveBoard?.content ?? [];
 
       setOrders(content);
@@ -285,9 +285,13 @@ export default function LiveOrderBoard() {
     setActionPending(true);
     try {
       if (status == "CANCELED") {
-        await ordersApi.cancelOrder(orderId);
+        const result = await ordersApi.orderCancel(orderId);
+        if (!result.isSuccess()) {
+          toast.error(result.error.message || "처리에 실패했습니다.");
+          return;
+        }
       } else {
-        await ordersApi.changeOrderStatus(orderId, status);
+        await ordersApi.updateOrderStatus(orderId, status);
       }
       toast.success(SUCCESS_MESSAGE[status]);
       // TTS: COMPLETED 성공 후 speak 호출. 실패 시 toast만, 주문 상태는 유지 (명세 013a~d는 보류)

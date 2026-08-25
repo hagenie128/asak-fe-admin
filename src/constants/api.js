@@ -1,12 +1,12 @@
 /**
  * Client-facing Admin API contract: `/api/admin` paths and camelCase JSON.
- * 현재 호출 구현: orders/menus/dashboard/soldOut/sales. 결제수단·인증·환불 경로는 아직 정본 계약 확정 또는 호출 구현이 필요하다.
- * 특히 paymentMethods는 현재 Controller camelCase와 Product Bible kebab-case 표기가 달라 호출 전에 정본을 확정한다.
+ * 현재 호출 구현: orders/menus/dashboard/soldOut/sales. 결제수단·인증·환불 경로는 호출 구현과 런타임 검증이 필요하다.
+ * paymentMethods 정본 경로는 Screen Bible·Controller와 같은 camelCase `/api/admin/paymentMethods`다.
  */
-export const API_BASE_PATH = "/api/admin";
+export const API_BASE_PATH = "/admin";
 
 export const API_ENDPOINTS = Object.freeze({
-  // TODO-023~025 구현 완료: dashboard는 백엔드 집계 → adminApi → useDashboard 순서로 연결된다.
+  // dashboard는 백엔드 집계 → adminApi → useDashboard 순서로 연결된다.
   login: `${API_BASE_PATH}/login`,
   dashboard: `${API_BASE_PATH}/dashboard`,
 
@@ -15,16 +15,20 @@ export const API_ENDPOINTS = Object.freeze({
   liveOrders: `${API_BASE_PATH}/orders/live`,
   orderStatus: (orderId, status) => `${API_BASE_PATH}/orders/${orderId}/${status}`,
   orderCancel: (orderId) => `${API_BASE_PATH}/orders/${orderId}/cancel`,
+  orderRefund: (orderId) => `${API_BASE_PATH}/orders/${orderId}/refund`,
 
   menus: `${API_BASE_PATH}/menus`,
   menu: (menuId) => `${API_BASE_PATH}/menus/${menuId}`,
   menuCategories: `${API_BASE_PATH}/menus/categories`,
   menuIngredients: `${API_BASE_PATH}/menus/ingredients`,
 
-  // TODO-007~010 구현 완료: soldOut은 GET 카탈로그와 PATCH changes[]를 사용한다. 옵션 항목도 API에는 포함되지만 현 화면 탭은 숨긴다.
-  // TODO-015~022 구현 완료: summary/monthly/daily/time-slots는 각 응답 shape에 맞는 별도 호출이다.
-  // TODO-011~014: paymentMethods는 Controller camelCase와 Product Bible kebab-case 표기 정본을 확정한 뒤 연결한다.
+  // soldOut은 GET 카탈로그와 PATCH changes[]를 사용한다. 옵션 항목도 API에는 포함되지만 현 화면 탭은 숨긴다.
+  // summary/monthly/daily/time-slots는 각 응답 shape에 맞는 별도 호출이다.
+  // TODO-011~014 [코드 연결 완료 · 실 API 검증 대기]: 화면은 API DTO(active, sortNo)를 직접 사용한다.
+  // 현재 API_BASE_PATH가 `/admin`이라 Backend의 `/api/admin/paymentMethods`와 경로가 다르므로,
+  // API_BASE_PATH 정렬과 GET/PATCH 실응답 확인 전에는 결제수단 기능을 실연동 완료로 표시하지 않는다.
   paymentMethods: `${API_BASE_PATH}/paymentMethods`,
+  paymentMethod: (methodId) => `${API_BASE_PATH}/paymentMethods/${methodId}`,
   soldOut: `${API_BASE_PATH}/soldOut`,
   salesSummary: `${API_BASE_PATH}/sales/summary`,
   salesMonthly: `${API_BASE_PATH}/sales/monthly`,

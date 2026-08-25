@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { soldOutApi } from "../api/soldOutApi.js";
 
-// TODO-010 (구현 완료): 서버 카탈로그를 baseline으로 두고 변경분만 PATCH하며 실패 시 baseline으로 복원한다.
+// 서버 카탈로그를 baseline으로 두고 변경분만 PATCH하며 실패 시 baseline으로 복원한다.
 // QA: loading/empty/error/dirty/saveConfirm, 빠른 재시도, 화면 이탈 후 재진입을 브라우저에서 확인한다.
 /** DB 카탈로그 행의 고유 키 — targetType + targetId */
 export function soldOutRowKey(item) {

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toDashboardViewModel } from "../adapters/dashboardAdapter.js";
 import { adminApi } from "../api/adminApi.js";
 
-// TODO-025 (구현 완료): 최초 loading, 재조회 refreshing, error와 refetch를 제공한다.
+// 최초 loading, 재조회 refreshing, error와 refetch를 제공한다.
 // 남은 결정: SCR-022의 widget별 partial error를 단일 dashboard 응답에서 어떻게 표시할지 확정한다.
 export function useDashboard() {
   const [data, setData] = useState(null);

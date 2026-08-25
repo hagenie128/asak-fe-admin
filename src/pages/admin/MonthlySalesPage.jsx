@@ -34,6 +34,7 @@ export default function MonthlySalesPage() {
   } = useSalesQuery({
     mode: "monthly",
     year,
+    month,
   });
   const { data: dailyData, status: dailyStatus } = useSalesQuery({
     mode: "daily",

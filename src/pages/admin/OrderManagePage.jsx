@@ -95,7 +95,7 @@ export default function OrderManagePage() {
   }, [appliedFilters, draftFilters]);
 
   const handleOrderDetail = async (orderId) => {
-    const result = await ordersApi.getOrder(orderId);
+    const result = await ordersApi.orderDetail(orderId);
     console.log("handleOrderDetail result:", result);
     if (result?.success === false) {
       toast.error(result.message);
@@ -122,26 +122,27 @@ export default function OrderManagePage() {
       dateTo: range.to,
     }));
   }
-  // TODO-042: backend TODO-038/039 및 frontend TODO-040 완료 후 ordersApi.refundOrder + ConfirmDialog를 연결한다.
-  // 승인 결제만 환불 가능한지와 409/이미 환불됨 응답을 구분하고, 성공 뒤에는 이 훅의 refetch()로 목록을 갱신한다.
-  // function handleRefund(orderId) {
-  //   setConfirmDialog({
-  //     title: "환불하시겠습니까?",
-  //     description: "환불 처리 후 결제 상태가 변경됩니다.",
-  //     confirmLabel: "환불",
-  //     tone: "danger",
-  //     onConfirm: () => {
-  //       const result = refundAdminOrder(orderId);
-  //       if (!result.success) {
-  //         toast.error(result.message);
-  //         return;
-  //       }
-  //       toast.success("환불 처리가 완료되었습니다.");
-  //       setSelectedOrder(result.data);
-  //       refetch();
-  //     },
-  //   });
-  // }
+  // TODO-042: backend TODO-038/039 및 frontend TODO-040 완료 후 실제 ordersApi.orderRefund + ConfirmDialog를 연결한다.
+  // 카드/신용카드는 이번 범위다. 토스페이는 실제 연동·결제 과정 통합 테스트가 성공할 때만 노출·처리하며,
+  // 승인 결제만 환불 가능한지와 409/이미 환불됨 응답을 구분하고 성공 뒤 refetch()로 목록을 갱신한다.
+  function handleRefund(orderId) {
+    setConfirmDialog({
+      title: "환불하시겠습니까?",
+      description: "환불 처리 후 결제 상태가 변경됩니다.",
+      confirmLabel: "환불",
+      tone: "danger",
+      onConfirm: () => {
+        const result = refundAdminOrder(orderId);
+        if (!result.success) {
+          toast.error(result.message);
+          return;
+        }
+        toast.success("환불 처리가 완료되었습니다.");
+        setSelectedOrder(result.data);
+        refetch();
+      },
+    });
+  }
 
   // TODO-043: OrderDetailPanel의 "영수증 출력" 버튼(onPrintReceipt(selectedOrder))에서
   // 전체 주문 객체를 그대로 받는다. buildReceiptText가 옵션·제외재료·요청사항까지 필요로 하므로
@@ -247,7 +248,7 @@ export default function OrderManagePage() {
         <OrderDetailPanel
           selectedOrder={selectedOrder}
           onClose={() => setSelectedOrder(null)}
-          // onRefund={handleRefund}
+          onRefund={handleRefund}
           onPrintReceipt={handlePrintReceipt}
         />
       </div>

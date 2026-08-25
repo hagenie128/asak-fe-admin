@@ -15,7 +15,7 @@ export default function AdminPaymentMethodRow({
   canMoveDown = false,
   disabled = false,
 }) {
-  const iconUrl = getPaymentMethodIconUrl(method.methodId, method.iconUrl);
+  const iconUrl = getPaymentMethodIconUrl(method.methodCode);
 
   return (
     <article className="payment-method-row">
@@ -24,7 +24,7 @@ export default function AdminPaymentMethodRow({
       </span>
       <div className="payment-method-row__info">
         <strong>
-          {method.name}
+          {method.methodName}
           {method.isMaintenance ? (
             <span className="payment-method-row__badge">점검중</span>
           ) : null}
@@ -35,7 +35,7 @@ export default function AdminPaymentMethodRow({
         <button
           type="button"
           disabled={disabled || !canMoveUp}
-          aria-label={`${method.name} 위로 이동`}
+          aria-label={`${method.methodName} 위로 이동`}
           onClick={onMoveUp}
         >
           <img alt="" aria-hidden="true" src={arrowUpIcon} />
@@ -43,7 +43,7 @@ export default function AdminPaymentMethodRow({
         <button
           type="button"
           disabled={disabled || !canMoveDown}
-          aria-label={`${method.name} 아래로 이동`}
+          aria-label={`${method.methodName} 아래로 이동`}
           onClick={onMoveDown}
         >
           <img alt="" aria-hidden="true" src={arrowDownIcon} />
@@ -51,10 +51,10 @@ export default function AdminPaymentMethodRow({
       </div>
       <button
         type="button"
-        className={`payment-toggle${method.isActive ? "" : " payment-toggle--off"}`}
+        className={`payment-toggle${method.active ? "" : " payment-toggle--off"}`}
         role="switch"
-        aria-checked={method.isActive}
-        aria-label={`${method.name} ${method.isActive ? "활성" : "비활성"}`}
+        aria-checked={method.active}
+        aria-label={`${method.methodName} ${method.active ? "활성" : "비활성"}`}
         disabled={disabled}
         onClick={onToggle}
       >
