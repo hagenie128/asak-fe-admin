@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ordersApi } from "../../api/ordersApi.js";
+import { refundReasonsApi } from "../../api/refundReasonsApi.js";
 import OrderDetailPanel from "../../components/admin/orders/OrderDetailPanel.jsx";
 import OrderTable from "../../components/admin/orders/OrderTable.jsx";
 import AdminConfirmDialog from "../../components/admin/shared/AdminConfirmDialog.jsx";
@@ -76,6 +77,33 @@ export default function OrderManagePage() {
   }));
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState(null);
+  const [refundReasons, setRefundReasons] = useState([]);
+  const [refundReasonCode, setRefundReasonCode] = useState("");
+  const [refundReasonDetail, setRefundReasonDetail] = useState("");
+  const [refundSubmitting, setRefundSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    refundReasonsApi
+      .listRefundReasons()
+      .then((reasons) => {
+        if (cancelled) return;
+        setRefundReasons(Array.isArray(reasons) ? reasons : []);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const selectedRefundReason = useMemo(
+    () => refundReasons.find((reason) => reason.code === refundReasonCode) ?? null,
+    [refundReasonCode, refundReasons],
+  );
+
+  const defaultRefundReasonCode = refundReasons[0]?.code ?? "";
 
   const { status, orders, totalElements, page, pageSize, onPageChange, refetch } = useOrdersQuery({
     pageSize: ORDERS_PAGINATION.pageSize,
@@ -122,26 +150,44 @@ export default function OrderManagePage() {
       dateTo: range.to,
     }));
   }
-  // TODO-042: backend TODO-038/039 및 frontend TODO-040 완료 후 실제 ordersApi.orderRefund + ConfirmDialog를 연결한다.
-  // 카드/신용카드는 이번 범위다. 토스페이는 실제 연동·결제 과정 통합 테스트가 성공할 때만 노출·처리하며,
-  // 승인 결제만 환불 가능한지와 409/이미 환불됨 응답을 구분하고 성공 뒤 refetch()로 목록을 갱신한다.
-  async function handleRefund(orderId) {
+  function handleRefund(orderId) {
+    setRefundReasonCode(defaultRefundReasonCode);
+    setRefundReasonDetail("");
     setConfirmDialog({
+      kind: "refund",
+      orderId,
       title: "환불하시겠습니까?",
-      description: "환불 처리 후 결제 상태가 변경됩니다.",
+      description: "환불 사유를 선택한 뒤 진행해주세요.",
       confirmLabel: "환불",
       tone: "danger",
-      onConfirm: async () => {
-        const result = await ordersApi.orderRefund(orderId);
-        if (result?.success === false) {
-          toast.error(result.message);
-          return;
-        }
-        toast.success(result.message);
-        setSelectedOrder(result);
-        await printReceipt(result, { onCompleted: () => refetch() });
-      },
     });
+  }
+
+  async function submitRefund(orderId) {
+    if (!refundReasonCode) {
+      toast.error("환불 사유를 선택해주세요.");
+      return;
+    }
+    if (selectedRefundReason?.requiresDetail && !refundReasonDetail.trim()) {
+      toast.error("기타 환불 사유를 입력해주세요.");
+      return;
+    }
+
+    setRefundSubmitting(true);
+    try {
+      const result = await ordersApi.orderRefund(orderId, {
+        refundReasonCode,
+        refundReasonDetail: refundReasonDetail.trim() || undefined,
+      });
+      toast.success("환불 처리가 완료되었습니다.");
+      setSelectedOrder(result);
+      setConfirmDialog(null);
+      await refetch();
+    } catch (error) {
+      toast.error(error.message || "환불 처리에 실패했습니다.");
+    } finally {
+      setRefundSubmitting(false);
+    }
   }
 
   // TODO-043: OrderDetailPanel의 "영수증 출력" 버튼(onPrintReceipt(selectedOrder))에서
@@ -163,9 +209,18 @@ export default function OrderManagePage() {
   }
 
   function handleConfirm() {
+    if (confirmDialog?.kind === "refund") {
+      submitRefund(confirmDialog.orderId);
+      return;
+    }
     const action = confirmDialog?.onConfirm;
     setConfirmDialog(null);
     action?.();
+  }
+
+  function handleConfirmCancel() {
+    if (refundSubmitting) return;
+    setConfirmDialog(null);
   }
 
   return (
@@ -258,9 +313,49 @@ export default function OrderManagePage() {
         description={confirmDialog?.description}
         confirmLabel={confirmDialog?.confirmLabel}
         tone={confirmDialog?.tone ?? "danger"}
+        isBusy={refundSubmitting}
         onConfirm={handleConfirm}
-        onCancel={() => setConfirmDialog(null)}
-      />
+        onCancel={handleConfirmCancel}
+      >
+        {confirmDialog?.kind === "refund" ? (
+          <>
+            <ul className="admin-refund-reason-list">
+              {refundReasons.map((reason) => (
+                <li key={reason.code}>
+                  <label
+                    className={refundReasonCode === reason.code ? "is-selected" : ""}
+                  >
+                    <input
+                      type="radio"
+                      name="refundReason"
+                      value={reason.code}
+                      checked={refundReasonCode === reason.code}
+                      disabled={refundSubmitting}
+                      onChange={() => {
+                        setRefundReasonCode(reason.code);
+                        if (!reason.requiresDetail) {
+                          setRefundReasonDetail("");
+                        }
+                      }}
+                    />
+                    <span>{reason.name}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            {selectedRefundReason?.requiresDetail ? (
+              <textarea
+                className="admin-refund-reason-detail"
+                placeholder="환불 사유를 입력해주세요."
+                value={refundReasonDetail}
+                maxLength={200}
+                disabled={refundSubmitting}
+                onChange={(event) => setRefundReasonDetail(event.target.value)}
+              />
+            ) : null}
+          </>
+        ) : null}
+      </AdminConfirmDialog>
     </section>
   );
 }
