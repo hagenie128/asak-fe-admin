@@ -21,6 +21,7 @@ const TABS = [
   { label: "메뉴", targetType: "MENU" },
   { label: "재료", targetType: "INGREDIENT" },
 ];
+const TAB_LABEL_BY_TYPE = Object.fromEntries(TABS.map((tab) => [tab.targetType, tab.label]));
 const SOLD_OUT_PAGINATION = ADMIN_PAGINATION.soldOut;
 
 const IMAGE_BY_KEY = {
@@ -32,7 +33,7 @@ const IMAGE_BY_KEY = {
   tomato: tomatoImage,
 };
 
-function ItemCard({ item, checked, onToggle, soldOut = false }) {
+function ItemCard({ item, checked, onToggle, soldOut = false, showType = false }) {
   const image = item.imageUrl || IMAGE_BY_KEY[item.imageKey] || tomatoImage;
 
   return (
@@ -57,6 +58,9 @@ function ItemCard({ item, checked, onToggle, soldOut = false }) {
       <div className="sold-out-card__info">
         <strong title={item.name}>{item.name}</strong>
         <div className="sold-out-card__chips">
+          {showType && TAB_LABEL_BY_TYPE[item.targetType] ? (
+            <span className="sold-out-chip sold-out-chip--type">{TAB_LABEL_BY_TYPE[item.targetType]}</span>
+          ) : null}
           {item.category ? <span className="sold-out-chip">{item.category}</span> : null}
           {soldOut || item.isSoldOut ? <AdminStatusBadge role="soldOut" /> : null}
         </div>
@@ -215,6 +219,7 @@ function SoldOutPanel({
                 key={key}
                 item={item}
                 soldOut
+                showType
                 checked={selectedKeys.has(key)}
                 onToggle={() => onToggle(key)}
               />
@@ -254,11 +259,6 @@ export default function SoldOutManagePage() {
     [draft.available, selectedTab],
   );
 
-  const typedSoldOut = useMemo(
-    () => draft.soldOut.filter((row) => row.targetType === selectedTab),
-    [draft.soldOut, selectedTab],
-  );
-
   const categories = useMemo(() => {
     const names = new Set(typedAvailable.map((row) => row.category).filter(Boolean));
     return ["전체", ...names];
@@ -276,7 +276,7 @@ export default function SoldOutManagePage() {
   const availablePage = usePagination(filteredAvailable, {
     pageSize: SOLD_OUT_PAGINATION.pageSize,
   });
-  const soldOutPage = usePagination(typedSoldOut, {
+  const soldOutPage = usePagination(draft.soldOut, {
     pageSize: SOLD_OUT_PAGINATION.pageSize,
   });
 
@@ -285,7 +285,6 @@ export default function SoldOutManagePage() {
     setSelectedCategory("전체");
     setKeyword("");
     availablePage.resetPage();
-    soldOutPage.resetPage();
   }
 
   function handleCategoryChange(name) {
