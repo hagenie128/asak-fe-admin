@@ -11,7 +11,11 @@ export const ordersApi = {
   updateOrderStatus: (orderId, status) =>
     apiClient.patch(API_ENDPOINTS.orderStatus(orderId, status)),
   orderCancel: (orderId) => apiClient.patch(API_ENDPOINTS.orderCancel(orderId)),
-  orderRefund: (orderId) => apiClient.patch(API_ENDPOINTS.orderRefund(orderId)),
+  orderRefund: (orderId, { refundReasonCode, refundReasonDetail } = {}) =>
+    apiClient.patch(API_ENDPOINTS.orderRefund(orderId), {
+      refundReasonCode,
+      ...(refundReasonDetail ? { refundReasonDetail } : {}),
+    }),
   // TODO-040: API_ENDPOINTS.orderRefund와 이 orderRefund 래퍼는 선언돼 있다. backend TODO-038/039 계약 검증 후
   // 화면의 mock 환불 호출을 이 래퍼로 교체한다. 카드/신용카드는 이번 범위이며, 토스페이는 실제 통합 테스트 성공 시만 포함한다.
   // TODO-041: 영수증 출력은 backend의 출력 책임(브라우저 인쇄/서버 발급)과 응답 형식이 확정된 뒤

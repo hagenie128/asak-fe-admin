@@ -16,6 +16,7 @@ export const API_ENDPOINTS = Object.freeze({
   orderStatus: (orderId, status) => `${API_BASE_PATH}/orders/${orderId}/${status}`,
   orderCancel: (orderId) => `${API_BASE_PATH}/orders/${orderId}/cancel`,
   orderRefund: (orderId) => `${API_BASE_PATH}/orders/${orderId}/refund`,
+  refundReasons: `${API_BASE_PATH}/refund-reasons`,
 
   menus: `${API_BASE_PATH}/menus`,
   menu: (menuId) => `${API_BASE_PATH}/menus/${menuId}`,

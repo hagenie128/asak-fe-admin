@@ -14,6 +14,7 @@ export default function AdminConfirmDialog({
   isBusy = false,
   onConfirm,
   onCancel,
+  children,
 }) {
   if (!open) return null;
 
@@ -47,8 +48,9 @@ export default function AdminConfirmDialog({
         </span>
         <div className="admin-confirm__text">
           <h2 id="admin-confirm-title">{title}</h2>
-          <p>{description}</p>
+          {description ? <p>{description}</p> : null}
         </div>
+        {children ? <div className="admin-confirm__body">{children}</div> : null}
         <div className="admin-confirm__actions">
           <button type="button" disabled={isBusy} onClick={onCancel}>
             {cancelLabel}

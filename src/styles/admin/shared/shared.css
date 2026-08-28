@@ -235,6 +235,51 @@
   font-size: 14px;
   line-height: 20px;
 }
+.admin-confirm__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+.admin-refund-reason-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.admin-refund-reason-list label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-bg-subtle);
+  color: var(--admin-text-primary);
+  font-size: 14px;
+  cursor: pointer;
+}
+.admin-refund-reason-list label.is-selected {
+  border-color: var(--admin-brand-primary);
+  background: color-mix(in srgb, var(--admin-brand-primary) 8%, var(--admin-bg-subtle));
+}
+.admin-refund-reason-list input {
+  margin: 0;
+}
+.admin-refund-reason-detail {
+  width: 100%;
+  min-height: 72px;
+  padding: 10px 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-panel);
+  color: var(--admin-text-primary);
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
 .admin-confirm__actions {
   display: flex;
   justify-content: center;
