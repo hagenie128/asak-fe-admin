@@ -3,6 +3,7 @@ import ricottaImage from "../../../assets/figma/soldout-ricotta.png";
 import { formatCurrency } from "../../../utils/currency.js";
 import AdminAsyncState from "../shared/AdminAsyncState.jsx";
 import AdminSearchInput from "../shared/AdminSearchInput.jsx";
+import AdminStatusBadge from "../shared/AdminStatusBadge.jsx";
 
 export default function MenuListPanel({
   status = "success",
@@ -106,7 +107,12 @@ export default function MenuListPanel({
             >
               <img src={menu.imageUrl || ricottaImage} alt="" />
               <div>
-                <strong title={menu.name}>{menu.name}</strong>
+                <div className="admin-menu-card__text">
+                  <strong title={menu.name}>{menu.name}</strong>
+                  {menu.isSoldOut || menu.soldOut || menu.isOrderable === false ? (
+                    <AdminStatusBadge role="soldOut" />
+                  ) : null}
+                </div>
                 <b>{formatCurrency(menu.price)}</b>
               </div>
             </article>

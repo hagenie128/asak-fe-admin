@@ -22,6 +22,7 @@ export const API_ENDPOINTS = Object.freeze({
   menu: (menuId) => `${API_BASE_PATH}/menus/${menuId}`,
   menuCategories: `${API_BASE_PATH}/menus/categories`,
   menuIngredients: `${API_BASE_PATH}/menus/ingredients`,
+  optionGroups: `${API_BASE_PATH}/opts/groups`,
 
   // soldOut은 GET 카탈로그와 PATCH changes[]를 사용한다. 옵션 항목도 API에는 포함되지만 현 화면 탭은 숨긴다.
   // summary/monthly/daily/time-slots는 각 응답 shape에 맞는 별도 호출이다.

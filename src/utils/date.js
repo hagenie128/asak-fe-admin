@@ -8,6 +8,28 @@ function toDate(value) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+export function toYmd(date = new Date()) {
+  const d = toDate(date);
+  if (!d) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function todayYmd() {
+  return toYmd(new Date());
+}
+
+export function currentYearMonth() {
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() + 1 };
+}
+
+export function calendarYearBounds() {
+  return { min: "2026-01-01", max: todayYmd() };
+}
+
 export function formatDate(value) {
   const d = toDate(value);
   if (!d) return "-";

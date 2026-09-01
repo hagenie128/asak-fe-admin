@@ -1,6 +1,5 @@
-/* SCR-019 / Sales Summary — Page는 조합만 */
+/* SCR-020 / Sales Summary — Page는 조합만 */
 import { useMemo, useState } from "react";
-import calendarIcon from "../../assets/figma/icon-calendar.svg";
 import AdminAsyncState from "../../components/admin/shared/AdminAsyncState.jsx";
 import AdminTopHeader from "../../components/admin/shared/AdminTopHeader.jsx";
 import AdminDatePicker from "../../components/admin/shared/AdminDatePicker.jsx";
@@ -8,7 +7,26 @@ import SalesShareCard from "../../components/admin/SalesShareCard.jsx";
 import { useSalesQuery } from "../../hooks/useSalesQuery.js";
 import { PERIODS } from "../../constants/orderLabels.js";
 import { formatCurrency } from "../../utils/currency.js";
-import { formatMd, findMaxIndex } from "../../utils/salesDisplay.js";
+import { currentYearMonth } from "../../utils/date.js";
+import {
+  endOfMonthYmd,
+  fillDailyRows,
+  findMaxIndex,
+  formatMd,
+  kpisFromRows,
+  sliceRowsByPeriod,
+  startOfMonthYmd,
+  todayYmd,
+  toShareRows,
+  tomorrowYmd,
+} from "../../utils/salesDisplay.js";
+
+const PERIOD_KEYS = ["today", "week", "month"];
+const PERIOD_DELTA_LABEL = {
+  today: "전일 대비",
+  week: "전주 대비",
+  month: "전월 대비",
+};
 
 function formatRangeLabel(from, to) {
   if (!from) return "-";
@@ -17,16 +35,13 @@ function formatRangeLabel(from, to) {
   return a === b ? a : `${a} ~ ${b}`;
 }
 
-function parseSummaryDateRange(label) {
-  if (!label) return null;
-  const parts = String(label)
-    .split("~")
-    .map((part) => part.trim().replaceAll(".", "-"));
-  if (!parts[0]) return null;
-  return { from: parts[0], to: parts[1] || parts[0] };
-}
-
 export default function SalesSummaryPage() {
+  const today = todayYmd();
+  const tomorrow = tomorrowYmd();
+  const { year, month } = currentYearMonth();
+  const monthFrom = startOfMonthYmd(year, month);
+  const monthTo = endOfMonthYmd(year, month);
+
   const [activePeriod, setActivePeriod] = useState("month");
   const [customRange, setCustomRange] = useState(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -37,8 +52,21 @@ export default function SalesSummaryPage() {
     startDate: customRange?.from,
     endDate: customRange?.to,
   });
+  const { data: dailyData } = useSalesQuery({
+    mode: "daily",
+    from: monthFrom,
+    to: monthTo,
+  });
 
-  const summaryRange = useMemo(() => parseSummaryDateRange(data?.dateRange), [data?.dateRange]);
+  const monthRows = useMemo(
+    () => fillDailyRows(dailyData?.rows ?? data?.dailySales, monthFrom, monthTo, { dummyThrough: tomorrow, today }),
+    [dailyData, data, monthFrom, monthTo, tomorrow, today],
+  );
+
+  const periodRows = useMemo(
+    () => sliceRowsByPeriod(monthRows, activePeriod, { today, customRange }),
+    [monthRows, activePeriod, today, customRange],
+  );
 
   const handleActivePeriod = (period) => {
     if (period === activePeriod && !customRange) return;
@@ -46,32 +74,84 @@ export default function SalesSummaryPage() {
     setCustomRange(null);
   };
 
-  const chartPoints = data?.chartPoints ?? [];
-  const peakIndex = findMaxIndex(chartPoints.map((point) => point.value));
+  const localKpis = kpisFromRows(periodRows);
+  const chartPoints = useMemo(() => {
+    const values = periodRows.map((row) => row.totalAmount);
+    const max = Math.max(...values, 1);
+    return periodRows.map((row) => {
+      const value = row.totalAmount;
+      const barHeight = value <= 0 || row.isFuture ? 0 : Math.max(4, Math.round((value / max) * 120));
+      return {
+        label: formatMd(row.date),
+        value,
+        barHeight,
+        isFuture: row.isFuture,
+        date: row.date,
+      };
+    });
+  }, [periodRows]);
+
+  const peakIndex = findMaxIndex(chartPoints.map((point) => (point.isFuture ? 0 : point.value)));
   const peakPoint = peakIndex >= 0 ? chartPoints[peakIndex] : null;
-  const dailyRows = [...(data?.dailySales ?? [])].reverse();
+  const dailyRows = [...periodRows].reverse();
 
   const rangeLabel = customRange
     ? formatRangeLabel(customRange.from, customRange.to)
-    : data?.dateRange || data?.label || "-";
+    : periodRows.length
+      ? formatRangeLabel(periodRows[0].date, periodRows[periodRows.length - 1].date)
+      : data?.dateRange || data?.label || "-";
 
-  const dailyMin = summaryRange?.from;
-  const dailyMax = summaryRange?.to;
-
-  if ((status === "loading" || status === "idle") && !data) {
+  if ((status === "loading" || status === "idle") && !data && !dailyData) {
     return <AdminAsyncState status="loading" layout="page" />;
   }
-  if (status === "error") {
+  if (status === "error" && !dailyData) {
     return (
       <AdminAsyncState
         status="error"
         layout="page"
-        title="매출 데이터를 불러오지 못했습니다"
+        title="매출 요약을 불러오지 못했습니다"
         description={error?.message || "잠시 후 다시 시도해 주세요."}
         onRetry={refetch}
       />
     );
   }
+
+  const kpis = [
+    {
+      label: "총매출",
+      value: localKpis.totalAmount,
+      display: formatCurrency(localKpis.totalAmount),
+      delta: customRange ? null : data?.kpis?.[0]?.delta,
+      deltaLabel: customRange ? "선택 기간" : PERIOD_DELTA_LABEL[activePeriod],
+    },
+    {
+      label: "주문 수",
+      value: localKpis.orderCount,
+      display: `${localKpis.orderCount}건`,
+      delta: customRange ? null : data?.kpis?.[1]?.delta,
+      deltaLabel: customRange ? "선택 기간" : PERIOD_DELTA_LABEL[activePeriod],
+    },
+    {
+      label: "평균 객단가",
+      value: localKpis.avgAmount,
+      display: formatCurrency(localKpis.avgAmount),
+      delta: customRange ? null : data?.kpis?.[2]?.delta,
+      deltaLabel: customRange ? "선택 기간" : PERIOD_DELTA_LABEL[activePeriod],
+    },
+  ];
+
+  const chartTitle =
+    activePeriod === "today"
+      ? "오늘 매출"
+      : activePeriod === "week"
+        ? "이번 주 일별 매출"
+        : customRange
+          ? "선택 기간 일별 매출"
+          : "이번 달 일별 매출";
+
+  const tickPoints = chartPoints.filter(
+    (_, index, items) => index === 0 || index === items.length - 1 || index % 3 === 0,
+  );
 
   return (
     <section className="sales-summary">
@@ -81,23 +161,27 @@ export default function SalesSummaryPage() {
         description="전체 매출 현황 및 핵심 지표"
       >
         <div className="sales-summary__filters">
-          {(data?.availablePeriods ?? []).map((periodKey) => (
+          {PERIOD_KEYS.map((periodKey) => (
             <button
               key={periodKey}
               type="button"
               className={periodKey === activePeriod && !customRange ? "is-selected" : ""}
               onClick={() => handleActivePeriod(periodKey)}
             >
-              {PERIODS[periodKey] || periodKey}
+              {PERIODS[periodKey]}
             </button>
           ))}
           <AdminDatePicker
             mode="range"
             open={calendarOpen}
-            value={customRange || summaryRange}
-            minDate={dailyMin}
-            maxDate={dailyMax}
-            availableDates={(data?.dailySales ?? []).map((row) => row.date)}
+            value={
+              customRange ||
+              (periodRows.length
+                ? { from: periodRows[0].date, to: periodRows[periodRows.length - 1].date }
+                : { from: today, to: today })
+            }
+            minDate={monthFrom}
+            maxDate={today}
             onChange={(range) => {
               setCustomRange(range);
               setCalendarOpen(false);
@@ -106,26 +190,29 @@ export default function SalesSummaryPage() {
           >
             <button
               type="button"
-              className={`sales-summary__range${calendarOpen || customRange ? " is-open" : ""}`}
+              className={customRange ? "is-selected" : ""}
               onClick={() => setCalendarOpen((v) => !v)}
-              aria-label="기간 달력 열기"
             >
-              <span>{rangeLabel}</span>
-              <img alt="" aria-hidden="true" src={calendarIcon} />
+              {rangeLabel}
             </button>
           </AdminDatePicker>
         </div>
       </AdminTopHeader>
 
       <div className="sales-summary__kpis">
-        {(data?.kpis ?? []).map((kpi) => (
+        {kpis.map((kpi) => (
           <article key={kpi.label}>
             <span>{kpi.label}</span>
             <strong>{kpi.display ?? formatCurrency(kpi.value)}</strong>
             <p>
               <b>
-                {kpi.delta > 0 ? "↑" : kpi.delta < 0 ? "↓" : ""}
-                {Math.abs(kpi.delta)}%
+                {kpi.delta == null
+                  ? "—"
+                  : kpi.delta > 0
+                    ? `↑ ${kpi.delta}%`
+                    : kpi.delta < 0
+                      ? `↓ ${Math.abs(kpi.delta)}%`
+                      : "—"}
               </b>
               <small>{kpi.deltaLabel}</small>
             </p>
@@ -135,92 +222,58 @@ export default function SalesSummaryPage() {
 
       <div className="sales-summary__middle">
         <section className="sales-chart">
-          <h2>{data?.chartTitle ?? "매출 추이"}</h2>
+          <h2>{chartTitle}</h2>
           <div className="sales-chart__body">
             <div className="sales-chart__bars">
-              {chartPoints.map((point, index) => (
+              {chartPoints.map((point) => (
                 <i
-                  key={`bar-${point.label}-${index}`}
-                  className={index === peakIndex ? "is-peak" : ""}
+                  key={`bar-${point.date}`}
+                  className={`${point.date === peakPoint?.date ? "is-peak" : ""}${point.isFuture ? " is-future" : ""}`.trim()}
                   style={{ height: `${point.barHeight}px` }}
                 />
               ))}
             </div>
             <div className="sales-chart__ticks">
-              {chartPoints.map((point, index) => (
-                <span key={`${point.label}-${index}`}>{point.label}</span>
+              {tickPoints.map((point) => (
+                <span key={`tick-${point.date}`}>{point.label}</span>
               ))}
             </div>
           </div>
           <p className="sales-chart__peak">
             <b>{peakPoint ? formatCurrency(peakPoint.value) : "-"}</b>
-            <span>피크 {peakPoint?.label ?? "-"}</span>
+            <span>{peakPoint ? `최고 매출일 ${peakPoint.label}` : "데이터 없음"}</span>
           </p>
         </section>
 
         <div className="sales-summary__right">
-          <SalesShareCard
-            title="결제수단 비중"
-            rows={(data?.paymentShare ?? []).map((payment, index) => [
-              payment.label,
-              `${payment.percent}%`,
-              `${payment.percent}%`,
-              index === 0,
-            ])}
-          />
-          <SalesShareCard
-            title="주문 유형"
-            rows={(data?.orderShare ?? []).map((order, index) => [
-              order.label,
-              `${order.percent}%`,
-              `${order.percent}%`,
-              index === 0,
-            ])}
-          />
+          <SalesShareCard title="결제수단별 매출" rows={toShareRows(data?.paymentShare)} />
+          <SalesShareCard title="주문유형별 매출" rows={toShareRows(data?.orderShare)} />
         </div>
       </div>
 
-      <div className="sales-summary__bottom">
-        <section className="sales-table">
-          <h2>일자별 매출{customRange ? " (선택 기간)" : ""}</h2>
-          <div className="sales-table__grid">
-            <div className="sales-table__head">
-              <span>날짜</span>
-              <span>주문 수</span>
-              <span>순매출</span>
-              <span>객단가</span>
-            </div>
-            {dailyRows.length === 0 ? (
-              <div className="sales-table__row">
-                <span>해당 기간 데이터 없음</span>
-              </div>
-            ) : (
-              dailyRows.map((row) => (
-                <div className="sales-table__row" key={row.date}>
-                  <span>{formatMd(row.date)}</span>
-                  <span>{row.orderCount}</span>
-                  <span>{formatCurrency(row.totalAmount)}</span>
-                  <span>{formatCurrency(row.avgAmount)}</span>
-                </div>
-              ))
-            )}
+      <section className="sales-table">
+        <h2>일별 매출</h2>
+        <div className="sales-table__grid">
+          <div className="sales-table__head">
+            <span>날짜</span>
+            <span>주문 수</span>
+            <span>총매출</span>
+            <span>평균 객단가</span>
           </div>
-        </section>
-
-        <section className="sales-ranking">
-          <h2>인기 메뉴 TOP 4</h2>
-          <div className="sales-ranking__rows">
-            {(data?.ranking ?? []).map((row) => (
-              <div className="sales-ranking__row" key={row.rank}>
-                <span className="sales-ranking__rank">{row.rank}</span>
-                <span className="sales-ranking__name">{row.menuName}</span>
-                <span className="sales-ranking__count">{row.orderCount}건</span>
-                <b className="sales-ranking__amount">{formatCurrency(row.salesAmount)}</b>
+          {dailyRows.length === 0 ? (
+            <p className="sales-table__empty">표시할 일별 매출이 없습니다.</p>
+          ) : (
+            dailyRows.map((row) => (
+              <div key={row.date} className={`sales-table__row${row.isFuture ? " is-future" : ""}`}>
+                <span>{formatMd(row.date)}</span>
+                <span>{row.isFuture ? "—" : `${row.orderCount}건`}</span>
+                <span>{row.isFuture ? "—" : formatCurrency(row.totalAmount)}</span>
+                <span>{row.isFuture ? "—" : formatCurrency(row.avgAmount)}</span>
               </div>
-            ))}
-          </div>
-        </section>
-      </div>
+            ))
+          )}
+        </div>
+      </section>
     </section>
   );
 }

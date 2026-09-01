@@ -24,6 +24,27 @@ const POLICIES = [
   },
 ];
 
+const POLICY_STORAGE_KEY = "asak-admin-payment-policies";
+
+function loadPolicies() {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(POLICY_STORAGE_KEY) ?? "");
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((row, index) => ({
+        title: row.title || POLICIES[index]?.title || `정책 ${index + 1}`,
+        body: row.body || POLICIES[index]?.body || "",
+      }));
+    }
+  } catch {
+    // 저장된 값이 없으면 기본 안내 문구를 쓴다.
+  }
+  return POLICIES;
+}
+
+function savePolicies(next) {
+  window.localStorage.setItem(POLICY_STORAGE_KEY, JSON.stringify(next));
+}
+
 function PreviewRow({ method }) {
   const imageUrl = method.imageUrl ?? getPaymentMethodIconUrl(method.methodCode);
 
@@ -49,6 +70,9 @@ function PreviewRow({ method }) {
 export default function PaymentMethodPage() {
   const draft = usePaymentMethodDraft();
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
+  const [policies, setPolicies] = useState(loadPolicies);
+  const [editingPolicyTitle, setEditingPolicyTitle] = useState(null);
+  const [policyDraft, setPolicyDraft] = useState("");
 
   async function handleSaveConfirm() {
     setSaveConfirmOpen(false);
@@ -58,6 +82,26 @@ export default function PaymentMethodPage() {
     } else {
       toast.error(result.message || "저장에 실패했습니다.");
     }
+  }
+
+  function startPolicyEdit(policy) {
+    setEditingPolicyTitle(policy.title);
+    setPolicyDraft(policy.body);
+  }
+
+  function cancelPolicyEdit() {
+    setEditingPolicyTitle(null);
+    setPolicyDraft("");
+  }
+
+  function confirmPolicyEdit() {
+    const next = policies.map((policy) =>
+      policy.title === editingPolicyTitle ? { ...policy, body: policyDraft.trim() || policy.body } : policy,
+    );
+    setPolicies(next);
+    savePolicies(next);
+    cancelPolicyEdit();
+    toast.success("안내 문구를 이 기기에 저장했습니다.");
   }
 
   if (draft.status === "loading") {
@@ -126,16 +170,39 @@ export default function PaymentMethodPage() {
             </div>
           )}
           <h2 className="payment-settings__policies-title">결제 정책 설정</h2>
+          <p className="payment-settings__policies-note">
+            결제수단 활성/순서는 키오스크에 저장됩니다. 아래 안내는 이 관리자 화면에만 저장됩니다.
+          </p>
           <div className="payment-policy-row">
-            {POLICIES.map((policy) => (
+            {policies.map((policy) => (
               <article key={policy.title} className="payment-policy-card">
                 <div className="payment-policy-card__head">
                   <strong>{policy.title}</strong>
-                  <button type="button" disabled>
-                    수정
-                  </button>
+                  {editingPolicyTitle === policy.title ? (
+                    <span className="payment-policy-card__edit-actions">
+                      <button type="button" onClick={cancelPolicyEdit}>
+                        취소
+                      </button>
+                      <button type="button" onClick={confirmPolicyEdit}>
+                        적용
+                      </button>
+                    </span>
+                  ) : (
+                    <button type="button" onClick={() => startPolicyEdit(policy)}>
+                      수정
+                    </button>
+                  )}
                 </div>
-                <p>{policy.body}</p>
+                {editingPolicyTitle === policy.title ? (
+                  <textarea
+                    className="payment-policy-card__editor"
+                    value={policyDraft}
+                    rows={4}
+                    onChange={(event) => setPolicyDraft(event.target.value)}
+                  />
+                ) : (
+                  <p>{policy.body}</p>
+                )}
               </article>
             ))}
           </div>

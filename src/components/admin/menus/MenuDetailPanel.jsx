@@ -12,6 +12,23 @@ function tagClassName(code = "") {
   return "menu-tag";
 }
 
+function ingredientRole(role) {
+  const value = String(role ?? "").trim().toLowerCase();
+  if (value === "core") return "core";
+  if (value === "base") return "base";
+  return "plain";
+}
+
+function tagCode(tag) {
+  if (typeof tag === "string") return tag;
+  return tag?.code || tag?.name || "";
+}
+
+function tagLabel(tag) {
+  if (typeof tag === "string") return tag;
+  return tag?.name || tag?.code || "";
+}
+
 function formatIngredientMeta(ingredient) {
   const qty =
     `${ingredient.quantity !== 0 ? `${ingredient.quantity}${ingredient.unit}` : ""}`.trim();
@@ -50,9 +67,9 @@ export default function MenuDetailPanel({ menu, onEdit, onDelete }) {
   }
 
   const ingredients = menu.ingredients ?? [];
-  const core = ingredients.filter((row) => row.role === "core");
-  const base = ingredients.filter((row) => row.role === "base");
-  const plain = ingredients.filter((row) => row.role === "default");
+  const core = ingredients.filter((row) => ingredientRole(row.role) === "core");
+  const base = ingredients.filter((row) => ingredientRole(row.role) === "base");
+  const plain = ingredients.filter((row) => ingredientRole(row.role) === "plain");
   const optionGroups = menu.optionGroups ?? [];
   const sortedOptionGroups = [...optionGroups].sort((a, b) => {
     if (Boolean(a.isRequired) === Boolean(b.isRequired)) return 0;
@@ -221,8 +238,8 @@ export default function MenuDetailPanel({ menu, onEdit, onDelete }) {
             <div>
               {tags.length > 0 ? (
                 tags.map((tag) => (
-                  <span key={tag.code || tag.name} className={tagClassName(tag.code)}>
-                    {tag.name || tag.code}
+                  <span key={tagCode(tag) || tagLabel(tag)} className={tagClassName(tagCode(tag))}>
+                    {tagLabel(tag)}
                   </span>
                 ))
               ) : (

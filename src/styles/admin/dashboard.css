@@ -159,6 +159,13 @@
   flex-direction: column;
 }
 
+.dashboard-orders__empty {
+  margin: 0;
+  color: var(--admin-text-secondary);
+  font-size: 14px;
+  line-height: 20px;
+}
+
 .dashboard-orders__head,
 .dashboard-orders__row {
   display: flex;

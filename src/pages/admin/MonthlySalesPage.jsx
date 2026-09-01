@@ -1,30 +1,34 @@
 /* SCR-020 / Monthly Sales */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AdminAsyncState from "../../components/admin/shared/AdminAsyncState.jsx";
 import AdminTopHeader from "../../components/admin/shared/AdminTopHeader.jsx";
 import AdminDatePicker from "../../components/admin/shared/AdminDatePicker.jsx";
 import { useSalesQuery } from "../../hooks/useSalesQuery.js";
 import { formatCurrency } from "../../utils/currency.js";
+import { todayYmd } from "../../utils/date.js";
 import {
-  filterRowsByYearMonth,
+  endOfMonthYmd,
+  fillDailyRows,
   findMaxIndex,
   formatMd,
   formatMonthlyNavLabel,
+  startOfMonthYmd,
   toBarHeights,
+  tomorrowYmd,
   toYearMonthKey,
   weekdayLabel,
 } from "../../utils/salesDisplay.js";
 
-const MOCK_YEAR = 2026;
-const MOCK_MONTH = 7;
-
 export default function MonthlySalesPage() {
-  const [year, setYear] = useState(MOCK_YEAR);
-  const [month, setMonth] = useState(MOCK_MONTH);
+  const today = todayYmd();
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [month, setMonth] = useState(() => new Date().getMonth() + 1);
+  const [monthReady, setMonthReady] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const monthKey = toYearMonthKey(year, month);
-  const dailyFrom = `${monthKey}-01`;
-  const dailyTo = `${monthKey}-${String(new Date(year, month, 0).getDate()).padStart(2, "0")}`;
+  const monthEndFull = endOfMonthYmd(year, month);
+  const dailyFrom = startOfMonthYmd(year, month);
+  const dailyTo = monthEndFull > today ? today : monthEndFull;
 
   const {
     data: monthlyData,
@@ -42,19 +46,38 @@ export default function MonthlySalesPage() {
     to: dailyTo,
   });
 
-  const baseYear = monthlyData?.year ?? MOCK_YEAR;
+  const baseYear = monthlyData?.year ?? new Date().getFullYear();
   const label = formatMonthlyNavLabel(year, month, baseYear);
+
+  useEffect(() => {
+    if (monthReady || monthlyStatus !== "success") return;
+    const currentRow = (monthlyData?.rows ?? []).find((row) => row.month === monthKey);
+    if (!currentRow?.totalAmount) {
+      const lastWithSales = [...(monthlyData?.rows ?? [])]
+        .reverse()
+        .find((row) => (row.totalAmount ?? 0) > 0);
+      if (lastWithSales?.month) {
+        const [y, m] = lastWithSales.month.split("-").map(Number);
+        setYear(y);
+        setMonth(m);
+      }
+    }
+    setMonthReady(true);
+  }, [monthReady, monthlyData, monthlyStatus, monthKey]);
 
   const monthRow = useMemo(() => {
     return (monthlyData?.rows ?? []).find((row) => row.month === monthKey) ?? null;
   }, [monthlyData, monthKey]);
 
   const monthDays = useMemo(() => {
-    return filterRowsByYearMonth(dailyData?.rows, year, month);
-  }, [dailyData, year, month]);
+    return fillDailyRows(dailyData?.rows, dailyFrom, monthEndFull, {
+      dummyThrough: tomorrowYmd(),
+      today,
+    });
+  }, [dailyData, dailyFrom, monthEndFull, today]);
 
-  const salesValues = monthDays.map((row) => row.totalAmount);
-  const orderValues = monthDays.map((row) => row.orderCount);
+  const salesValues = monthDays.map((row) => (row.isFuture ? 0 : row.totalAmount));
+  const orderValues = monthDays.map((row) => (row.isFuture ? 0 : row.orderCount));
   const salesBars = toBarHeights(salesValues, 70);
   const orderBars = toBarHeights(orderValues, 40);
   const peakIndex = findMaxIndex(salesValues);
@@ -112,6 +135,10 @@ export default function MonthlySalesPage() {
   };
 
   const handleNextMonth = () => {
+    const now = new Date();
+    if (year > now.getFullYear() || (year === now.getFullYear() && month >= now.getMonth() + 1)) {
+      return;
+    }
     if (month === 12) {
       setYear((y) => y + 1);
       setMonth(1);
@@ -151,7 +178,7 @@ export default function MonthlySalesPage() {
             open={calendarOpen}
             value={`${year}-${String(month).padStart(2, "0")}-01`}
             minDate="2026-01-01"
-            maxDate="2026-12-31"
+            maxDate={today}
             availableMonths={(monthlyData?.rows ?? []).map((row) => row.month)}
             onChange={(ymd) => {
               const [y, m] = ymd.split("-").map(Number);
@@ -213,7 +240,7 @@ export default function MonthlySalesPage() {
                   {salesBars.map((height, index) => (
                     <i
                       key={monthDays[index].date}
-                      className={index === peakIndex ? "is-peak" : ""}
+                      className={`${index === peakIndex ? "is-peak" : ""}${monthDays[index].isFuture ? " is-future" : ""}`.trim()}
                       style={{ height: `${height}px` }}
                     />
                   ))}

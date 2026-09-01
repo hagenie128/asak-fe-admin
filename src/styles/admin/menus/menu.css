@@ -223,6 +223,15 @@
   min-height: 40px;
 }
 
+.admin-menu-card__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
 .admin-menu-card strong {
   flex: 1 1 auto;
   min-width: 0;

@@ -40,14 +40,8 @@ function sanitizeNutrition(nutrition) {
   return hasValue ? nutrition : null;
 }
 
-function getOptionGroupCatalog(menus) {
-  const groupsById = new Map();
-  menus.forEach((menu) => {
-    (menu.detail?.optionGroups ?? []).forEach((group) => {
-      if (!groupsById.has(group.optionGroupId)) groupsById.set(group.optionGroupId, group);
-    });
-  });
-  return [...groupsById.values()];
+function getOptionGroupCatalog(groups = []) {
+  return Array.isArray(groups) ? groups : [];
 }
 
 function buildListParams({ page, pageSize, selectedCategoryId, keyword }) {
@@ -78,6 +72,7 @@ export function useMenusQuery({
   const [categories, setCategories] = useState([]);
   const [selectedMenu, setSelectedMenu] = useState(null);
   const [ingredients, setIngredients] = useState([]);
+  const [optionGroupCatalog, setOptionGroupCatalog] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,11 +80,30 @@ export function useMenusQuery({
       .getIngredients()
       .then((response) => {
         if (cancelled) return;
-        setIngredients(response ?? []);
+        setIngredients(response?.content ?? []);
       })
       .catch(() => {
-        setIngredients([]);
+        if (!cancelled) setIngredients([]);
       });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    menusApi
+      .listOptionGroups()
+      .then((response) => {
+        if (cancelled) return;
+        setOptionGroupCatalog(getOptionGroupCatalog(response));
+      })
+      .catch(() => {
+        if (!cancelled) setOptionGroupCatalog([]);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
   useEffect(() => {
     let cancelled = false;
@@ -147,8 +161,6 @@ export function useMenusQuery({
     fetchCategories();
   }, []);
 
-  const optionGroupCatalog = getOptionGroupCatalog(menus);
-
   useEffect(() => {
     let cancelled = false;
 
@@ -183,6 +195,7 @@ export function useMenusQuery({
       price: Number(payload.price) || 0,
       imageUrl: payload.imageUrl || null,
       description: payload.description || null,
+      isSoldOut: payload.isSoldOut === true,
       ingredients: (payload.ingredients ?? []).map((row) => ({
         ingredientId: row.ingredientId,
         role: row.role,
@@ -213,6 +226,7 @@ export function useMenusQuery({
       price: Number(payload.price) || 0,
       imageUrl: payload.imageUrl || null,
       description: payload.description || null,
+      isSoldOut: payload.isSoldOut === true,
       ingredients: (payload.ingredients ?? []).map((row) => ({
         ingredientId: row.ingredientId,
         role: row.role,

@@ -302,9 +302,9 @@
   font-weight: 500;
 }
 
-.sold-out-chip--danger {
-  background: var(--admin-danger-soft);
-  color: var(--admin-danger);
+.sold-out-chip--affected {
+  background: #fff4e5;
+  color: #b45309;
 }
 
 /* transfer-controls (134:11914) — 48px 원형 2개, 패널 높이 기준 세로 중앙 */

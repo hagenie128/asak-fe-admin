@@ -10,4 +10,5 @@ export const menusApi = {
   updateMenu: (menuId, payload) => apiClient.patch(API_ENDPOINTS.menu(menuId), payload),
   deleteMenu: (menuId) => apiClient.delete(API_ENDPOINTS.menu(menuId)),
   getIngredients: () => apiClient.get(API_ENDPOINTS.menuIngredients),
+  listOptionGroups: () => apiClient.get(API_ENDPOINTS.optionGroups),
 };

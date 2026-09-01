@@ -109,6 +109,21 @@ export function useSoldOutDraft() {
     [soldOut, baselineSoldOutKeys],
   );
 
+  const pendingAffectedMenuCount = useMemo(() => {
+    const changes = toChanges(baselineSoldOut, soldOut);
+    const byKey = new Map(
+      [...baselineSoldOut, ...soldOut].map((row) => [soldOutRowKey(row), row]),
+    );
+    return changes
+      .filter((change) => change.isSoldOut)
+      .reduce((sum, change) => {
+        const row = byKey.get(`${change.targetType}-${change.targetId}`);
+        const count = Number(row?.affectedMenuCount);
+        if (Number.isFinite(count) && count > 0) return sum + count;
+        return sum + (change.targetType === "MENU" ? 1 : 0);
+      }, 0);
+  }, [baselineSoldOut, soldOut]);
+
   const toggleAvailableSelect = useCallback((key) => {
     setSelectedAvailable((prev) => {
       const next = new Set(prev);
@@ -217,6 +232,7 @@ export function useSoldOutDraft() {
     available,
     soldOut,
     dirtyCount,
+    pendingAffectedMenuCount,
     isSaving,
     selectedAvailable,
     selectedSoldOut,

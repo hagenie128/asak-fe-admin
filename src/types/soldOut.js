@@ -20,6 +20,8 @@
  * @property {string} name
  * @property {string} category
  * @property {boolean} isSoldOut
+ * @property {string} [imageUrl]
+ * @property {number} [affectedMenuCount] 영향 메뉴 수
  * @property {string} [imageKey]
  * @property {number} [price] MENU일 때
  */

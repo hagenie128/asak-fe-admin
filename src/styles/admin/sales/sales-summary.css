@@ -208,6 +208,41 @@
   background: var(--admin-brand-primary);
 }
 
+.sales-chart__bars i.is-future,
+.sales-chart__bars .sales-chart__bar-btn.is-future {
+  background: var(--admin-cool-gray-50);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.sales-chart__bars .sales-chart__bar-btn {
+  flex: 1 0 0;
+  min-width: 0;
+  border: none;
+  padding: 0;
+  border-radius: 4px 4px 0 0;
+  background: var(--admin-lime-soft);
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+.sales-chart__bars .sales-chart__bar-btn.is-peak {
+  background: var(--admin-brand-primary);
+}
+
+.sales-chart__bars .sales-chart__bar-btn.is-selected {
+  outline: 2px solid var(--admin-brand-primary);
+  outline-offset: 1px;
+}
+
+.sales-chart--month-overview {
+  margin-bottom: var(--admin-space-md);
+}
+
+.sales-table__row.is-future {
+  opacity: 0.5;
+}
+
 .sales-chart__ticks {
   width: 100%;
   display: flex;

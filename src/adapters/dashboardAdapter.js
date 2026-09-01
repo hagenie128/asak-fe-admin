@@ -26,5 +26,6 @@ export function toDashboardViewModel(data = {}) {
     orderTypeSummary: data.orderTypeSummary ?? {},
     inventoryAlerts: data.inventoryAlerts ?? [],
     weeklySales: toWeeklySalesView(data.weeklySales ?? []),
+    previousWeekNetSales: Number(data.previousWeekNetSales) || 0,
   };
 }

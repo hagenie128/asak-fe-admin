@@ -27,6 +27,9 @@ export function DashboardRecentOrders({ orders = [] }) {
   return (
     <section className="dashboard-panel dashboard-orders">
       <h2>최근 주문</h2>
+      {orders.length === 0 ? (
+        <p className="dashboard-orders__empty">오늘 표시할 주문이 없습니다.</p>
+      ) : (
       <div className="dashboard-orders__table">
         <div className="dashboard-orders__head">
           <span>주문번호</span>
@@ -51,6 +54,7 @@ export function DashboardRecentOrders({ orders = [] }) {
           </div>
         ))}
       </div>
+      )}
     </section>
   );
 }
@@ -139,15 +143,28 @@ export function DashboardWeeklyTrend({ weeklySales = [], stats = {} }) {
   );
 }
 
-export function buildWeeklyTrendStats(weeklySales = []) {
+export function buildWeeklyTrendStats(weeklySales = [], previousWeekTotal = null) {
   const amounts = weeklySales.map((row) => row.amount).filter((value) => value > 0);
   const weekTotal = amounts.reduce((sum, value) => sum + value, 0);
   const dailyAverage = amounts.length ? Math.round(weekTotal / amounts.length) : 0;
+  const previous = Number(previousWeekTotal);
+  const hasPrevious = Number.isFinite(previous) && previous > 0;
+  let weekDelta = "—";
+  let weekDeltaTone = "neutral";
+
+  if (hasPrevious) {
+    const percent = Math.round(((weekTotal - previous) / previous) * 100);
+    weekDelta = `${percent > 0 ? "+" : ""}${percent}%`;
+    weekDeltaTone = percent < 0 ? "down" : "up";
+  } else if (weekTotal > 0 && previous === 0) {
+    weekDelta = "+100%";
+    weekDeltaTone = "up";
+  }
 
   return {
     weekTotal: formatCurrency(weekTotal),
     dailyAverage: formatCurrency(dailyAverage),
-    weekDelta: "—",
-    weekDeltaTone: "neutral",
+    weekDelta,
+    weekDeltaTone,
   };
 }

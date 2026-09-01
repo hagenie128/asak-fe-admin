@@ -48,7 +48,7 @@ export default function DashboardPage() {
     );
   }
 
-  const trendStats = buildWeeklyTrendStats(data.weeklySales);
+  const trendStats = buildWeeklyTrendStats(data.weeklySales, data.previousWeekNetSales);
 
   return (
     <section className="admin-dashboard" aria-label="대시보드">

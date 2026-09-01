@@ -61,8 +61,13 @@ function ItemCard({ item, checked, onToggle, soldOut = false, showType = false }
           {showType && TAB_LABEL_BY_TYPE[item.targetType] ? (
             <span className="sold-out-chip sold-out-chip--type">{TAB_LABEL_BY_TYPE[item.targetType]}</span>
           ) : null}
-          {item.category ? <span className="sold-out-chip">{item.category}</span> : null}
-          {soldOut || item.isSoldOut ? <AdminStatusBadge role="soldOut" /> : null}
+              {item.category ? <span className="sold-out-chip">{item.category}</span> : null}
+              {Number(item.affectedMenuCount) > 0 ? (
+                <span className="sold-out-chip sold-out-chip--affected">
+                  영향 메뉴 {item.affectedMenuCount}개
+                </span>
+              ) : null}
+              {soldOut || item.isSoldOut ? <AdminStatusBadge role="soldOut" /> : null}
         </div>
       </div>
     </article>
@@ -396,8 +401,12 @@ export default function SoldOutManagePage() {
       </div>
       <AdminConfirmDialog
         open={saveConfirmOpen}
-        title="변경사항을 저장할까요?"
-        description={`품절 상태 변경 ${draft.dirtyCount}건을 저장합니다.`}
+        title="변경 내용을 저장할까요?"
+        description={
+          draft.pendingAffectedMenuCount > 0
+            ? `품절 상태 변경 ${draft.dirtyCount}건을 저장합니다. 영향 메뉴 ${draft.pendingAffectedMenuCount}개`
+            : `품절 상태 변경 ${draft.dirtyCount}건을 저장합니다.`
+        }
         confirmLabel="저장"
         tone="warning"
         isBusy={draft.isSaving}

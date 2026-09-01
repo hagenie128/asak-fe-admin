@@ -95,10 +95,12 @@ function MenuCard({ menu }) {
             <b>{menu.base}</b>
           </p>
         ) : null}
-        <p className="figma-order-menu__dressing">
-          <span>드레싱:</span>
-          <b>{menu?.dressing || "발사믹"}</b>
-        </p>
+        {menu?.dressing ? (
+          <p className="figma-order-menu__dressing">
+            <span>드레싱:</span>
+            <b>{menu.dressing}</b>
+          </p>
+        ) : null}
       </div>
       {options.length > 0 ? (
         <div className="figma-order-menu__options">
@@ -236,6 +238,7 @@ export default function LiveOrderBoard() {
   const [cancelOrderId, setCancelOrderId] = useState(null);
   const [now, setNow] = useState(() => Date.now());
   const boardRef = useRef(null);
+  const inFlightRef = useRef(false);
 
   function moveToEdge(position) {
     const board = boardRef.current;
@@ -249,6 +252,8 @@ export default function LiveOrderBoard() {
 
   const refresh = useCallback(async (options = {}) => {
     const showLoading = options.showLoading !== false;
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     if (showLoading) setStatus("loading");
 
     try {
@@ -258,13 +263,21 @@ export default function LiveOrderBoard() {
       setOrders(content);
       setStatus(content.length === 0 ? "empty" : "success");
     } catch {
-      setOrders([]);
-      setStatus("error");
+      if (showLoading) {
+        setOrders([]);
+        setStatus("error");
+      }
+    } finally {
+      inFlightRef.current = false;
     }
   }, []);
 
   useEffect(() => {
     refresh();
+    const pollId = window.setInterval(() => {
+      refresh({ showLoading: false });
+    }, 5000);
+    return () => window.clearInterval(pollId);
   }, [refresh]);
 
   useEffect(() => {
@@ -280,16 +293,12 @@ export default function LiveOrderBoard() {
     const SUCCESS_MESSAGE = {
       PREPARING: "준비중으로 상태가 변경되었습니다.",
       COMPLETED: "호출이 완료되었습니다.",
-      CANCELED: "삭제가 완료되었습니다.",
+      CANCELED: "취소가 완료되었습니다.",
     };
     setActionPending(true);
     try {
-      if (status == "CANCELED") {
-        const result = await ordersApi.orderCancel(orderId);
-        if (!result.isSuccess()) {
-          toast.error(result.error.message || "처리에 실패했습니다.");
-          return;
-        }
+      if (status === "CANCELED") {
+        await ordersApi.orderCancel(orderId);
       } else {
         await ordersApi.updateOrderStatus(orderId, status);
       }
@@ -312,6 +321,8 @@ export default function LiveOrderBoard() {
           toast.error(err.message || "전이 충돌이 발생했습니다.");
         } else if (err.code === "INVALID_ORDER_STATUS_TRANSITION") {
           toast.error(err.message || "유효하지 않은 상태 전이입니다.");
+        } else if (err.code === "ORDER_PAYMENT_APPROVED_CANCEL_NOT_ALLOWED") {
+          toast.error(err.message || "결제 완료된 주문은 주문 관리에서 환불해 주세요.");
         } else {
           toast.error(err.message || "처리에 실패했습니다.");
         }
@@ -407,7 +418,7 @@ export default function LiveOrderBoard() {
         <button
           type="button"
           className="live-order-preview__arrow"
-          disabled={status !== "success" || orders.page >= orders.totalPages - 1}
+          disabled={status !== "success" || orders.length <= 0}
           aria-label="가장 최근 주문"
           onClick={() => moveToEdge("end")}
         >

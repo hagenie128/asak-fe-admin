@@ -229,6 +229,32 @@
   color: var(--admin-text-secondary);
 }
 
+.payment-settings__policies-note {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--admin-text-secondary);
+}
+
+.payment-policy-card__edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.payment-policy-card__editor {
+  width: 100%;
+  min-height: 80px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--admin-text-primary);
+}
+
 /* 우열: 키오스크 미리보기 — 목록과 가로 배치 (아래로 내리지 않음) */
 .payment-settings__preview {
   width: 686px;

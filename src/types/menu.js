@@ -37,6 +37,16 @@
  * @property {number|null} maxSelect
  * @property {boolean|null} isRequired
  * @property {string|null} recommendedLabel 메뉴별 추천(없으면 정책 기본)
+ * @property {MenuOptionItem[]} [items]
+ */
+
+/**
+ * @typedef {Object} MenuOptionItem
+ * @property {number} optionItemId
+ * @property {string} name
+ * @property {number} [extraPrice]
+ * @property {boolean} [isSoldOut]
+ * @property {boolean} [isRecommended]
  */
 
 /**

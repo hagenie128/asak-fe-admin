@@ -1,9 +1,7 @@
 /*
  * SCR-015 / Login / Default (Figma node 134:12033)
- * 인증 API 없음 → adminSession(localStorage) mock만.
+ * 매장 번호 '0001' 하드코드 승인. JWT 없음, 세션은 adminSession(localStorage) 플래그.
  *
- * mock 시나리오(JSON meta/scenarios.login 참고): admin | kitchen | viewer | invalid
- * 세션: loginAdmin() / logoutAdmin() — src/auth/adminSession.js
  * 성공 시 navigate "/" (주문 현황)
  * Props: onLoggedIn? (선택 콜백)
  */
@@ -31,12 +29,18 @@ export default function LoginPage({ onLoggedIn } = {}) {
       }
       // TODO-034 [코드 연결 완료 · 실 API 검증 대기]: storeNumber → adminApi.login → approved 검사 → loginAdmin 순서다.
       // API_BASE_PATH 정렬 후 중복 요청, 잘못된 매장 번호·빈 입력·네트워크 오류를 실제 응답으로 구분해 수동 QA한다.
-      const storeNumber = event.target.storeNumber.value;
+      const storeNumber = String(event.target.storeNumber.value ?? "").trim();
+      if (!storeNumber) {
+        toast.error("매장 번호를 입력해 주세요.");
+        return;
+      }
       const result = await adminApi.login(storeNumber);
       if (result.approved === true) {
         loginAdmin({ remember });
         onLoggedIn?.();
+        return;
       }
+      toast.error("승인되지 않은 매장 번호입니다.");
     } catch (e) {
       console.error(e);
       toast.error(e.message || "로그인에 실패했습니다.");
