@@ -107,6 +107,7 @@ export function usePaymentMethodDraft() {
       } else {
         // before(=attempt)는 현재 dirty 상태와 같음 → 마지막 성공 baseline으로 복원
         setRows(cloneRows(baselineRows));
+        return { success: false, message: "일부 결제수단 설정을 저장하지 못했습니다." };
       }
       return { success: true, message: "결제수단 설정을 저장했습니다." };
     } catch {
