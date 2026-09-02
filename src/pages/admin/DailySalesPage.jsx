@@ -23,7 +23,7 @@ import {
   tomorrowYmd,
 } from "../../utils/salesDisplay.js";
 
-const { min: CALENDAR_MIN, max: CALENDAR_MAX } = calendarYearBounds();
+const { min: CALENDAR_MIN } = calendarYearBounds();
 
 function formatDelta(delta) {
   if (delta == null) return { text: "—", dir: "" };
@@ -56,21 +56,58 @@ export default function DailySalesPage() {
   const selectedMonth = Number(selectedDate.slice(5, 7));
   const monthFrom = startOfMonthYmd(selectedYear, selectedMonth);
   const monthTo = endOfMonthYmd(selectedYear, selectedMonth);
+  const monthQueryTo = monthTo > today ? today : monthTo;
 
+  const prevDate = selectedDate ? shiftYmd(selectedDate, -1) : null;
+  const canFetchPrev = Boolean(prevDate && prevDate >= CALENDAR_MIN);
+
+  // API-017: daily는 하루(from=to) 단위. 랭킹·비중은 해당 일자 기준.
   const { data, status, error, refetch } = useSalesQuery({
     mode: "daily",
-    from: monthFrom,
-    to: monthTo,
+    from: selectedDate,
+    to: selectedDate,
+  });
+
+  const { data: prevDayData } = useSalesQuery({
+    mode: "daily",
+    from: prevDate ?? selectedDate,
+    to: prevDate ?? selectedDate,
+    enabled: canFetchPrev,
+  });
+
+  // 월간 미니 차트만 summary(기간) API로 일별 행을 가져온다.
+  const { data: monthSummary, status: monthStatus } = useSalesQuery({
+    mode: "summary",
+    period: null,
+    startDate: monthFrom,
+    endDate: monthQueryTo,
   });
 
   const monthDays = useMemo(
-    () => fillDailyRows(data?.rows, monthFrom, monthTo, { dummyThrough: tomorrow, today }),
-    [data, monthFrom, monthTo, tomorrow, today],
+    () =>
+      fillDailyRows(monthSummary?.dailySales, monthFrom, monthTo, {
+        dummyThrough: tomorrow,
+        today,
+      }),
+    [monthSummary, monthFrom, monthTo, tomorrow, today],
   );
 
-  const selectedRow = monthDays.find((row) => row.date === selectedDate) ?? monthDays[0] ?? null;
-  const prevDate = selectedDate ? shiftYmd(selectedDate, -1) : null;
-  const prevRow = prevDate ? monthDays.find((row) => row.date === prevDate) ?? null : null;
+  const selectedRow = useMemo(() => {
+    const rows = fillDailyRows(data?.rows, selectedDate, selectedDate, {
+      dummyThrough: tomorrow,
+      today,
+    });
+    return rows[0] ?? null;
+  }, [data, selectedDate, tomorrow, today]);
+
+  const prevRow = useMemo(() => {
+    if (!canFetchPrev) return null;
+    const rows = fillDailyRows(prevDayData?.rows, prevDate, prevDate, {
+      dummyThrough: tomorrow,
+      today,
+    });
+    return rows[0] ?? null;
+  }, [canFetchPrev, prevDayData, prevDate, tomorrow, today]);
 
   const {
     data: timeSlotData,
@@ -115,7 +152,7 @@ export default function DailySalesPage() {
 
   const availableDates = monthDays.filter((row) => !row.isFuture).map((row) => row.date);
 
-  if (status === "loading" || status === "idle") {
+  if (status === "loading" || status === "idle" || monthStatus === "loading" || monthStatus === "idle") {
     return <AdminAsyncState status="loading" layout="page" />;
   }
   if (status === "error") {

@@ -4,16 +4,12 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import dismissIcon from "../../../assets/figma/icon-dismiss.svg";
+import { INGREDIENT_CATEGORY_FILTERS, INGREDIENT_CATEGORY_TONE } from "@/constants/ingredientCategories.js";
 
-const FILTERS = [
-  { key: "전체", tone: "all" },
-  { key: "채소", tone: "veg" },
-  { key: "단백질", tone: "protein" },
-  { key: "드레싱", tone: "dressing" },
-  { key: "베이스", tone: "base" },
-  { key: "사이드", tone: "side" },
-  { key: "음료", tone: "drink" },
-];
+const FILTERS = INGREDIENT_CATEGORY_FILTERS.map((key) => ({
+  key,
+  tone: INGREDIENT_CATEGORY_TONE[key] ?? "all",
+}));
 
 /** Figma 150:5525 샘플 + mock 카탈로그 */
 export const MOCK_INGREDIENT_CATALOG = [
@@ -133,15 +129,7 @@ function formatNutrition(row) {
 }
 
 function categoryTone(category = "") {
-  const map = {
-    채소: "veg",
-    단백질: "protein",
-    드레싱: "dressing",
-    베이스: "base",
-    사이드: "side",
-    음료: "drink",
-  };
-  return map[category] || "veg";
+  return INGREDIENT_CATEGORY_TONE[category] || "veg";
 }
 
 /**

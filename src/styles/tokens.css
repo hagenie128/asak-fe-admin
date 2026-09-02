@@ -87,6 +87,8 @@
   --admin-chart-bar: #bfd99e;
   --admin-chart-bar-current: #6ba629;
   --admin-chart-bar-alt: #4caf50;
+  --admin-chart-track-max-width: 640px;
+  --admin-chart-bar-max-width: 16px;
 
   /* 중성 회색 — Figma Primitive에 없는 코드 전용 값이라 Figma식 이름을 쓰지 않는다.
      Primitive의 near-black은 Neutral/850 #333333, Neutral/900 #212121, Black #000000 뿐.

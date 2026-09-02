@@ -22,7 +22,8 @@ import { salesApi } from "../api/salesApi.js";
  * @param {number} [options.year] monthly 조회 연도
  * @param {number} [options.month] monthly 랭킹을 조회할 달(1~12). 없으면 서버가 최근 달을 쓴다.
  * @param {string} [options.from] daily 조회 시작일(ISO)
- * @param {string} [options.to] daily 조회 종료일(ISO)
+ * @param {string} [options.to] daily 조회 종료일(ISO). 생략 시 from과 동일(하루 조회).
+ * @param {boolean} [options.enabled=true] false면 요청하지 않는다.
  */
 export function useSalesQuery({
   mode = "summary",
@@ -33,6 +34,7 @@ export function useSalesQuery({
   month,
   from,
   to,
+  enabled = true,
 } = {}) {
   const [status, setStatus] = useState("idle");
   const [data, setData] = useState(null);
@@ -44,6 +46,10 @@ export function useSalesQuery({
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      return undefined;
+    }
+
     let cancelled = false;
 
     setError(null);
@@ -92,7 +98,7 @@ export function useSalesQuery({
     return () => {
       cancelled = true;
     };
-  }, [mode, period, startDate, endDate, year, month, from, to, requestVersion]);
+  }, [enabled, mode, period, startDate, endDate, year, month, from, to, requestVersion]);
 
   return {
     status,

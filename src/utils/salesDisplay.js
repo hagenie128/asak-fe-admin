@@ -115,11 +115,19 @@ export function endOfMonthYmd(year, month) {
   return `${year}-${String(month).padStart(2, "0")}-${String(last).padStart(2, "0")}`;
 }
 
+/** 해당 주 월요일 (ISO 주: 월~일) */
 export function startOfWeekYmd(ymd) {
   const date = parseYmd(ymd);
   if (!date) return ymd;
-  date.setDate(date.getDate() - date.getDay());
+  const weekday = date.getDay();
+  const daysSinceMonday = weekday === 0 ? 6 : weekday - 1;
+  date.setDate(date.getDate() - daysSinceMonday);
   return toYmd(date);
+}
+
+/** 해당 주 일요일 */
+export function endOfWeekYmd(ymd) {
+  return shiftYmd(startOfWeekYmd(ymd), 6);
 }
 
 export function eachYmd(from, to) {
@@ -158,7 +166,7 @@ export function makeDummyDay(ymd) {
   };
 }
 
-export function fillDailyRows(rows, from, to, { dummyThrough, today } = {}) {
+export function fillDailyRows(rows, from, to, { dummyThrough, today, placeholders = false } = {}) {
   const dayToday = today ?? todayYmdFromDate();
   const lastDummy = dummyThrough ?? tomorrowYmd();
   const byDate = new Map((rows ?? []).map((row) => [row.date, row]));
@@ -172,6 +180,7 @@ export function fillDailyRows(rows, from, to, { dummyThrough, today } = {}) {
         avgAmount: 0,
         isDummy: false,
         isFuture: true,
+        isPlaceholder: false,
       };
     }
 
@@ -187,12 +196,33 @@ export function fillDailyRows(rows, from, to, { dummyThrough, today } = {}) {
           Number(existing.avgAmount) || (orderCount ? Math.round(totalAmount / orderCount) : 0),
         isDummy: false,
         isFuture: false,
+        isPlaceholder: false,
+      };
+    }
+
+    if (placeholders) {
+      return {
+        date,
+        orderCount: 0,
+        totalAmount: 0,
+        avgAmount: 0,
+        isDummy: false,
+        isFuture: false,
+        isPlaceholder: true,
       };
     }
 
     if (date <= lastDummy) return makeDummyDay(date);
 
-    return { date, orderCount: 0, totalAmount: 0, avgAmount: 0, isDummy: false, isFuture: false };
+    return {
+      date,
+      orderCount: 0,
+      totalAmount: 0,
+      avgAmount: 0,
+      isDummy: false,
+      isFuture: false,
+      isPlaceholder: false,
+    };
   });
 }
 
@@ -205,7 +235,7 @@ export function sliceRowsByPeriod(rows, period, { today, customRange } = {}) {
   if (period === "today") return (rows ?? []).filter((row) => row.date === day);
   if (period === "week") {
     const from = startOfWeekYmd(day);
-    const weekEnd = shiftYmd(from, 6);
+    const weekEnd = endOfWeekYmd(day);
     return (rows ?? []).filter((row) => row.date >= from && row.date <= weekEnd);
   }
   if (period === "month") {

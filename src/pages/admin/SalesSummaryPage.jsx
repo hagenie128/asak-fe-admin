@@ -7,19 +7,24 @@ import SalesShareCard from "../../components/admin/SalesShareCard.jsx";
 import { useSalesQuery } from "../../hooks/useSalesQuery.js";
 import { PERIODS } from "../../constants/orderLabels.js";
 import { formatCurrency } from "../../utils/currency.js";
-import { currentYearMonth } from "../../utils/date.js";
+import { calendarYearBounds } from "../../utils/date.js";
 import {
-  endOfMonthYmd,
   fillDailyRows,
   findMaxIndex,
   formatMd,
   kpisFromRows,
   sliceRowsByPeriod,
-  startOfMonthYmd,
   todayYmd,
+  toBarHeights,
   toShareRows,
   tomorrowYmd,
 } from "../../utils/salesDisplay.js";
+
+function shouldShowChartTick(index, total) {
+  return index === 0 || index === total - 1 || index % 3 === 0;
+}
+
+const { min: CALENDAR_MIN } = calendarYearBounds();
 
 const PERIOD_KEYS = ["today", "week", "month"];
 const PERIOD_DELTA_LABEL = {
@@ -38,9 +43,6 @@ function formatRangeLabel(from, to) {
 export default function SalesSummaryPage() {
   const today = todayYmd();
   const tomorrow = tomorrowYmd();
-  const { year, month } = currentYearMonth();
-  const monthFrom = startOfMonthYmd(year, month);
-  const monthTo = endOfMonthYmd(year, month);
 
   const [activePeriod, setActivePeriod] = useState("month");
   const [customRange, setCustomRange] = useState(null);
@@ -54,18 +56,36 @@ export default function SalesSummaryPage() {
   });
   const { data: dailyData } = useSalesQuery({
     mode: "daily",
-    from: monthFrom,
-    to: monthTo,
+    from: CALENDAR_MIN,
+    to: today,
   });
 
-  const monthRows = useMemo(
-    () => fillDailyRows(dailyData?.rows ?? data?.dailySales, monthFrom, monthTo, { dummyThrough: tomorrow, today }),
-    [dailyData, data, monthFrom, monthTo, tomorrow, today],
+  const allDailyRows = useMemo(
+    () =>
+      fillDailyRows(dailyData?.rows ?? data?.dailySales, CALENDAR_MIN, today, {
+        today,
+        placeholders: true,
+      }),
+    [dailyData, data, today],
   );
 
   const periodRows = useMemo(
-    () => sliceRowsByPeriod(monthRows, activePeriod, { today, customRange }),
-    [monthRows, activePeriod, today, customRange],
+    () => sliceRowsByPeriod(allDailyRows, activePeriod, { today, customRange }),
+    [allDailyRows, activePeriod, today, customRange],
+  );
+
+  /** 차트·표: 오늘 제외(「오늘」 탭 제외). 미완료 당일 데이터는 요약 차트에 넣지 않는다. */
+  const displayRows = useMemo(() => {
+    if (activePeriod === "today") return periodRows;
+    return periodRows.filter((row) => row.date !== today && !row.isFuture);
+  }, [periodRows, activePeriod, today]);
+
+  const salesAvailableDates = useMemo(
+    () =>
+      allDailyRows
+        .filter((row) => !row.isFuture && !row.isDummy && Number(row.totalAmount) > 0)
+        .map((row) => row.date),
+    [allDailyRows],
   );
 
   const handleActivePeriod = (period) => {
@@ -74,26 +94,28 @@ export default function SalesSummaryPage() {
     setCustomRange(null);
   };
 
-  const localKpis = kpisFromRows(periodRows);
+  const localKpis = kpisFromRows(activePeriod === "today" ? periodRows : displayRows);
   const chartPoints = useMemo(() => {
-    const values = periodRows.map((row) => row.totalAmount);
-    const max = Math.max(...values, 1);
-    return periodRows.map((row) => {
-      const value = row.totalAmount;
-      const barHeight = value <= 0 || row.isFuture ? 0 : Math.max(4, Math.round((value / max) * 120));
-      return {
-        label: formatMd(row.date),
-        value,
-        barHeight,
-        isFuture: row.isFuture,
-        date: row.date,
-      };
-    });
-  }, [periodRows]);
+    const values = displayRows.map((row) =>
+      row.isPlaceholder || row.totalAmount <= 0 ? 0 : row.totalAmount,
+    );
+    const barHeights = toBarHeights(values, 120);
+    return displayRows.map((row, index) => ({
+      label: formatMd(row.date),
+      value: row.totalAmount,
+      barHeight: barHeights[index],
+      isFuture: row.isFuture,
+      isPlaceholder: row.isPlaceholder || row.totalAmount <= 0,
+      showTick: shouldShowChartTick(index, displayRows.length),
+      date: row.date,
+    }));
+  }, [displayRows]);
 
-  const peakIndex = findMaxIndex(chartPoints.map((point) => (point.isFuture ? 0 : point.value)));
+  const peakIndex = findMaxIndex(
+    chartPoints.map((point) => (point.isPlaceholder ? 0 : point.value)),
+  );
   const peakPoint = peakIndex >= 0 ? chartPoints[peakIndex] : null;
-  const dailyRows = [...periodRows].reverse();
+  const dailyRows = [...displayRows].reverse();
 
   const rangeLabel = customRange
     ? formatRangeLabel(customRange.from, customRange.to)
@@ -180,8 +202,10 @@ export default function SalesSummaryPage() {
                 ? { from: periodRows[0].date, to: periodRows[periodRows.length - 1].date }
                 : { from: today, to: today })
             }
-            minDate={monthFrom}
+            minDate={CALENDAR_MIN}
             maxDate={today}
+            availableDates={salesAvailableDates}
+            onlyAvailableSelectable
             onChange={(range) => {
               setCustomRange(range);
               setCalendarOpen(false);
@@ -264,11 +288,14 @@ export default function SalesSummaryPage() {
             <p className="sales-table__empty">표시할 일별 매출이 없습니다.</p>
           ) : (
             dailyRows.map((row) => (
-              <div key={row.date} className={`sales-table__row${row.isFuture ? " is-future" : ""}`}>
+              <div
+                key={row.date}
+                className={`sales-table__row${row.isFuture ? " is-future" : ""}${row.isPlaceholder ? " is-placeholder" : ""}`}
+              >
                 <span>{formatMd(row.date)}</span>
-                <span>{row.isFuture ? "—" : `${row.orderCount}건`}</span>
-                <span>{row.isFuture ? "—" : formatCurrency(row.totalAmount)}</span>
-                <span>{row.isFuture ? "—" : formatCurrency(row.avgAmount)}</span>
+                <span>{row.isPlaceholder ? "—" : `${row.orderCount}건`}</span>
+                <span>{row.isPlaceholder ? "—" : formatCurrency(row.totalAmount)}</span>
+                <span>{row.isPlaceholder ? "—" : formatCurrency(row.avgAmount)}</span>
               </div>
             ))
           )}
