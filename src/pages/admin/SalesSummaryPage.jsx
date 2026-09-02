@@ -72,11 +72,8 @@ export default function SalesSummaryPage() {
     [allDailyRows, activePeriod, today, customRange],
   );
 
-  /** 차트·표: 오늘 제외(「오늘」 탭 제외). 미완료 당일 데이터는 요약 차트에 넣지 않는다. */
-  const displayRows = useMemo(() => {
-    if (activePeriod === "today") return periodRows;
-    return periodRows.filter((row) => row.date !== today && !row.isFuture);
-  }, [periodRows, activePeriod, today]);
+  /** KPI·표는 미래일 제외. 차트는 기간 전체(오늘 포함, 말일까지 플레이스홀더). */
+  const kpiRows = useMemo(() => periodRows.filter((row) => !row.isFuture), [periodRows]);
 
   const salesAvailableDates = useMemo(
     () =>
@@ -92,33 +89,33 @@ export default function SalesSummaryPage() {
     setCustomRange(null);
   };
 
-  const localKpis = kpisFromRows(activePeriod === "today" ? periodRows : displayRows);
+  const localKpis = kpisFromRows(kpiRows);
   const chartPoints = useMemo(() => {
-    const values = displayRows.map((row) =>
-      row.isPlaceholder || row.totalAmount <= 0 ? 0 : row.totalAmount,
+    const values = periodRows.map((row) =>
+      row.isFuture || row.isPlaceholder || row.totalAmount <= 0 ? 0 : row.totalAmount,
     );
     const barHeights = toBarHeights(values, 120);
-    return displayRows.map((row, index) => ({
+    return periodRows.map((row, index) => ({
       label: formatMd(row.date),
       value: row.totalAmount,
       barHeight: barHeights[index],
       isFuture: row.isFuture,
-      isPlaceholder: row.isPlaceholder || row.totalAmount <= 0,
-      showTick: shouldShowChartTick(index, displayRows.length),
+      isPlaceholder: row.isFuture || row.isPlaceholder || row.totalAmount <= 0,
+      showTick: shouldShowChartTick(index, periodRows.length),
       date: row.date,
     }));
-  }, [displayRows]);
+  }, [periodRows]);
 
   const peakIndex = findMaxIndex(
     chartPoints.map((point) => (point.isPlaceholder ? 0 : point.value)),
   );
   const peakPoint = peakIndex >= 0 ? chartPoints[peakIndex] : null;
-  const dailyRows = [...displayRows].reverse();
+  const dailyRows = [...kpiRows].reverse();
 
   const rangeLabel = customRange
     ? formatRangeLabel(customRange.from, customRange.to)
-    : displayRows.length
-      ? formatRangeLabel(displayRows[0].date, displayRows[displayRows.length - 1].date)
+    : kpiRows.length
+      ? formatRangeLabel(kpiRows[0].date, kpiRows[kpiRows.length - 1].date)
       : data?.dateRange || data?.label || "-";
 
   if ((status === "loading" || status === "idle") && !data && !dailyData) {
