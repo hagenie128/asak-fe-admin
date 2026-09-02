@@ -241,6 +241,48 @@
   outline-offset: 1px;
 }
 
+.sales-chart__bars--columns {
+  align-items: stretch;
+}
+
+.sales-chart__bar-col {
+  flex: 0 0 var(--admin-chart-bar-max-width, 16px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-height: 0;
+}
+
+.sales-chart__bar-col i {
+  width: 100%;
+  flex: 0 0 auto;
+}
+
+.sales-chart__bars i.is-placeholder,
+.sales-chart__bars .sales-chart__bar-btn.is-placeholder {
+  background: var(--admin-cool-gray-50);
+  opacity: 0.55;
+}
+
+.sales-chart__tick {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  color: var(--admin-text-secondary);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.sales-chart__tick.is-spacer {
+  visibility: hidden;
+}
+
+.sales-table__row.is-placeholder {
+  opacity: 0.55;
+}
+
 .sales-chart--month-overview {
   margin-bottom: var(--admin-space-md);
 }

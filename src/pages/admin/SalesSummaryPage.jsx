@@ -17,7 +17,6 @@ import {
   todayYmd,
   toBarHeights,
   toShareRows,
-  tomorrowYmd,
 } from "../../utils/salesDisplay.js";
 
 function shouldShowChartTick(index, total) {
@@ -42,7 +41,6 @@ function formatRangeLabel(from, to) {
 
 export default function SalesSummaryPage() {
   const today = todayYmd();
-  const tomorrow = tomorrowYmd();
 
   const [activePeriod, setActivePeriod] = useState("month");
   const [customRange, setCustomRange] = useState(null);
@@ -119,8 +117,8 @@ export default function SalesSummaryPage() {
 
   const rangeLabel = customRange
     ? formatRangeLabel(customRange.from, customRange.to)
-    : periodRows.length
-      ? formatRangeLabel(periodRows[0].date, periodRows[periodRows.length - 1].date)
+    : displayRows.length
+      ? formatRangeLabel(displayRows[0].date, displayRows[displayRows.length - 1].date)
       : data?.dateRange || data?.label || "-";
 
   if ((status === "loading" || status === "idle") && !data && !dailyData) {
@@ -170,10 +168,6 @@ export default function SalesSummaryPage() {
         : customRange
           ? "선택 기간 일별 매출"
           : "이번 달 일별 매출";
-
-  const tickPoints = chartPoints.filter(
-    (_, index, items) => index === 0 || index === items.length - 1 || index % 3 === 0,
-  );
 
   return (
     <section className="sales-summary">
@@ -248,18 +242,23 @@ export default function SalesSummaryPage() {
         <section className="sales-chart">
           <h2>{chartTitle}</h2>
           <div className="sales-chart__body">
-            <div className="sales-chart__bars">
+            <div className="sales-chart__bars sales-chart__bars--columns">
               {chartPoints.map((point) => (
-                <i
-                  key={`bar-${point.date}`}
-                  className={`${point.date === peakPoint?.date ? "is-peak" : ""}${point.isFuture ? " is-future" : ""}`.trim()}
-                  style={{ height: `${point.barHeight}px` }}
-                />
-              ))}
-            </div>
-            <div className="sales-chart__ticks">
-              {tickPoints.map((point) => (
-                <span key={`tick-${point.date}`}>{point.label}</span>
+                <div key={`col-${point.date}`} className="sales-chart__bar-col">
+                  <i
+                    className={[
+                      point.date === peakPoint?.date ? "is-peak" : "",
+                      point.isFuture ? "is-future" : "",
+                      point.isPlaceholder ? "is-placeholder" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    style={{ height: `${point.isPlaceholder ? 4 : point.barHeight}px` }}
+                  />
+                  <span className={`sales-chart__tick${point.showTick ? "" : " is-spacer"}`}>
+                    {point.showTick ? point.label : ""}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
