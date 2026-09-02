@@ -9,6 +9,18 @@ import {
 import { formatCurrency } from "./currency.js";
 import { formatDateTime } from "./date.js";
 
+/** mock 문자열 코드 · BE association `{ methodName }` 모두 처리 */
+export function formatPaymentMethodLabel(paymentMethod) {
+  if (paymentMethod == null) return "-";
+  if (typeof paymentMethod === "string") {
+    return PAYMENT_METHOD_LABEL[paymentMethod] ?? paymentMethod;
+  }
+  const name =
+    paymentMethod.methodName ?? paymentMethod.methodCode ?? paymentMethod.code;
+  if (name == null) return "-";
+  return PAYMENT_METHOD_LABEL[name] ?? name;
+}
+
 export function buildReceiptText(order) {
   const lines = [];
   const W = 40;
@@ -20,9 +32,7 @@ export function buildReceiptText(order) {
   lines.push(`주문번호: ${order.orderNo}`);
   lines.push(`주문일시: ${formatDateTime(order.createdAt)}`);
   lines.push(`결제상태: ${PAYMENT_STATUS_LABEL[order.paymentStatus] ?? "-"}`);
-  lines.push(
-    `결제수단: ${PAYMENT_METHOD_LABEL[order.paymentMethod] ?? order.paymentMethod ?? "-"}`,
-  );
+  lines.push(`결제수단: ${formatPaymentMethodLabel(order.paymentMethod)}`);
   const orderStatus = order.orderStatus ?? order.status;
   if (orderStatus === ORDER_STATUS.REFUNDED || orderStatus === ORDER_STATUS.CANCELED) {
     lines.push(`취소/환불 금액: -${formatCurrency(order.totalAmount)}`);
