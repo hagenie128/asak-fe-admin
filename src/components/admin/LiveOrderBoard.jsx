@@ -2,7 +2,7 @@
  * SCR-009 / Live Order
  * API: GET /api/admin/orders/live
  * 응답: data.content[]의 orderId, orderNo, orderTypeLabel, orderStatus,
- * totalAmount, createdAt, elapsedSec, menus[]를 주문 카드에 표시한다.
+ * totalAmount, createdAt, menus[]를 주문 카드에 표시한다.
  */
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ordersApi } from "../../api/ordersApi.js";
@@ -69,16 +69,6 @@ function sortOptionsByTone(options) {
     .map(({ option }) => option);
 }
 
-function formatElapsedTime(createdAt, now) {
-  const elapsedSec = Math.max(0, Math.floor((now - new Date(createdAt).getTime()) / 1000));
-
-  const day = Math.floor(elapsedSec / (60 * 60 * 24));
-
-  const time = new Date((elapsedSec % (60 * 60 * 24)) * 1000).toISOString().slice(11, 19);
-
-  return day > 0 ? `${day}일 ${time}` : time;
-}
-
 function MenuCard({ menu }) {
   const options = sortOptionsByTone(menu?.options ?? []);
 
@@ -123,7 +113,7 @@ function MenuCard({ menu }) {
   );
 }
 
-function OrderCard({ order, now, onAction, actionPending = false }) {
+function OrderCard({ order, onAction, actionPending = false }) {
   const menus = order.menus ?? [];
   const cardRef = useRef(null);
   const [requiresWideLayout, setRequiresWideLayout] = useState(false);
@@ -181,7 +171,7 @@ function OrderCard({ order, now, onAction, actionPending = false }) {
     >
       <header className="figma-order-card__header">
         <strong>{liveOrderNo}</strong>
-        <time>경과 {formatElapsedTime(order.createdAt, now)}</time>
+        <time dateTime={order.createdAt}>주문완료 {formatTime(order.createdAt)}</time>
       </header>
       <span
         className={`figma-order-card__type${order.orderTypeLabel === "포장" ? " figma-order-card__type--takeout" : ""}`}
@@ -408,7 +398,6 @@ export default function LiveOrderBoard() {
               <OrderCard
                 key={order.orderId}
                 order={order}
-                now={now}
                 onAction={handleOrder}
                 actionPending={actionPending}
               />
