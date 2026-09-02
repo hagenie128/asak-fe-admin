@@ -1,4 +1,5 @@
 /* SCR-011 / Sold-out — getSoldOutCatalog() → useSoldOutDraft */
+import { INGREDIENT_CATEGORY_FILTERS } from "@/constants/ingredientCategories.js";
 import { useMemo, useState } from "react";
 import chickenImage from "../../assets/figma/soldout-chicken.png";
 import pastaImage from "../../assets/figma/soldout-pasta.png";
@@ -8,14 +9,12 @@ import sandwichImage from "../../assets/figma/soldout-sandwich.png";
 import tomatoImage from "../../assets/figma/soldout-tomato.png";
 import AdminAsyncState from "../../components/admin/shared/AdminAsyncState.jsx";
 import AdminConfirmDialog from "../../components/admin/shared/AdminConfirmDialog.jsx";
-import AdminTopHeader from "../../components/admin/shared/AdminTopHeader.jsx";
 import AdminPagination from "../../components/admin/shared/AdminPagination.jsx";
 import AdminSearchInput from "../../components/admin/shared/AdminSearchInput.jsx";
-import AdminStatusBadge from "../../components/admin/shared/AdminStatusBadge.jsx";
+import AdminTopHeader from "../../components/admin/shared/AdminTopHeader.jsx";
 import { ADMIN_PAGINATION } from "../../constants/pagination.js";
-import { soldOutRowKey, useSoldOutDraft } from "../../hooks/useSoldOutDraft.js";
 import { usePagination } from "../../hooks/usePagination.js";
-import { toast } from "../../utils/toast.js";
+import { soldOutRowKey, useSoldOutDraft } from "../../hooks/useSoldOutDraft.js";
 
 const TABS = [
   { label: "메뉴", targetType: "MENU" },
@@ -59,15 +58,17 @@ function ItemCard({ item, checked, onToggle, soldOut = false, showType = false }
         <strong title={item.name}>{item.name}</strong>
         <div className="sold-out-card__chips">
           {showType && TAB_LABEL_BY_TYPE[item.targetType] ? (
-            <span className="sold-out-chip sold-out-chip--type">{TAB_LABEL_BY_TYPE[item.targetType]}</span>
+            <span className="sold-out-chip sold-out-chip--type">
+              {TAB_LABEL_BY_TYPE[item.targetType]}
+            </span>
           ) : null}
-              {item.category ? <span className="sold-out-chip">{item.category}</span> : null}
-              {Number(item.affectedMenuCount) > 0 ? (
+          {item.category ? <span className="sold-out-chip">{item.category}</span> : null}
+          {/* {Number(item.affectedMenuCount) > 0 ? (
                 <span className="sold-out-chip sold-out-chip--affected">
                   영향 메뉴 {item.affectedMenuCount}개
                 </span>
-              ) : null}
-              {soldOut || item.isSoldOut ? <AdminStatusBadge role="soldOut" /> : null}
+              ) : null} */}
+          {/* {soldOut || item.isSoldOut ? <AdminStatusBadge role="soldOut" /> : null} */}
         </div>
       </div>
     </article>
@@ -265,15 +266,24 @@ export default function SoldOutManagePage() {
   );
 
   const categories = useMemo(() => {
+    if (selectedTab === "INGREDIENT") {
+      return INGREDIENT_CATEGORY_FILTERS;
+    }
     const names = new Set(typedAvailable.map((row) => row.category).filter(Boolean));
     return ["전체", ...names];
-  }, [typedAvailable]);
+  }, [typedAvailable, selectedTab]);
 
   const filteredAvailable = useMemo(() => {
     const q = keyword.trim().toLowerCase();
     return typedAvailable.filter((row) => {
       if (selectedCategory !== "전체" && row.category !== selectedCategory) return false;
-      if (q && !String(row.name ?? "").toLowerCase().includes(q)) return false;
+      if (
+        q &&
+        !String(row.name ?? "")
+          .toLowerCase()
+          .includes(q)
+      )
+        return false;
       return true;
     });
   }, [typedAvailable, selectedCategory, keyword]);

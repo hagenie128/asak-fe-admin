@@ -67,7 +67,9 @@ function formatDot(ymd) {
 
 function startOfWeek(date) {
   const d = new Date(date);
-  d.setDate(d.getDate() - d.getDay());
+  const weekday = d.getDay();
+  const daysSinceMonday = weekday === 0 ? 6 : weekday - 1;
+  d.setDate(d.getDate() - daysSinceMonday);
   return d;
 }
 
@@ -123,6 +125,8 @@ export default function AdminDatePicker({
   monthsVisible = 2,
   /** 데이터가 있는 YYYY-MM-DD 목록. 없으면 해당 날짜 글자를 옅게 표시한다. */
   availableDates = null,
+  /** true면 availableDates 밖 날짜는 선택 불가 */
+  onlyAvailableSelectable = false,
   /** 데이터가 있는 YYYY-MM 목록(월 선택용). */
   availableMonths = null,
 }) {
@@ -199,6 +203,7 @@ export default function AdminDatePicker({
     const ymd = toYmd(date);
     if (min && isBefore(ymd, toYmd(min))) return true;
     if (max && isAfter(ymd, toYmd(max))) return true;
+    if (onlyAvailableSelectable && availableDateSet && !availableDateSet.has(ymd)) return true;
     return false;
   }
 

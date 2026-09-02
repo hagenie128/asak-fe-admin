@@ -185,6 +185,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 12px;
 }
 
@@ -192,14 +193,18 @@
   flex: 1 0 0;
   min-height: 0;
   width: 100%;
+  max-width: var(--admin-chart-track-max-width, 640px);
+  margin-inline: auto;
   display: flex;
   align-items: flex-end;
+  justify-content: center;
   gap: 4px;
 }
 
 .sales-chart__bars i {
-  flex: 1 0 0;
+  flex: 1 1 0;
   min-width: 0;
+  max-width: var(--admin-chart-bar-max-width, 16px);
   border-radius: 4px 4px 0 0;
   background: var(--admin-lime-soft);
 }
@@ -216,8 +221,9 @@
 }
 
 .sales-chart__bars .sales-chart__bar-btn {
-  flex: 1 0 0;
+  flex: 1 1 0;
   min-width: 0;
+  max-width: var(--admin-chart-bar-max-width, 16px);
   border: none;
   padding: 0;
   border-radius: 4px 4px 0 0;
@@ -235,6 +241,48 @@
   outline-offset: 1px;
 }
 
+.sales-chart__bars--columns {
+  align-items: stretch;
+}
+
+.sales-chart__bar-col {
+  flex: 0 0 var(--admin-chart-bar-max-width, 16px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-height: 0;
+}
+
+.sales-chart__bar-col i {
+  width: 100%;
+  flex: 0 0 auto;
+}
+
+.sales-chart__bars i.is-placeholder,
+.sales-chart__bars .sales-chart__bar-btn.is-placeholder {
+  background: var(--admin-cool-gray-50);
+  opacity: 0.55;
+}
+
+.sales-chart__tick {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  color: var(--admin-text-secondary);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.sales-chart__tick.is-spacer {
+  visibility: hidden;
+}
+
+.sales-table__row.is-placeholder {
+  opacity: 0.55;
+}
+
 .sales-chart--month-overview {
   margin-bottom: var(--admin-space-md);
 }
@@ -245,6 +293,8 @@
 
 .sales-chart__ticks {
   width: 100%;
+  max-width: var(--admin-chart-track-max-width, 640px);
+  margin-inline: auto;
   display: flex;
   justify-content: space-between;
   font-size: 12px;
@@ -333,6 +383,8 @@
 .sales-share-card__row i {
   display: block;
   width: 100%;
+  max-width: var(--admin-chart-track-max-width, 640px);
+  margin-inline: auto;
   height: 8px;
   border-radius: 4px;
   background: var(--admin-border);

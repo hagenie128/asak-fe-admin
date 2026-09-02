@@ -20,7 +20,7 @@
   display: flex;
   flex-direction: row;
   flex: 1 1 0;
-  align-items: stretch;
+  align-items: flex-start;
   gap: var(--admin-space-md);
   min-height: 0;
   overflow: hidden;
@@ -159,7 +159,7 @@
    고정 4열이 아니라 auto-fill: 패널이 좁아져도 가로 배치가 깨지지 않게. */
 .sold-out-grid {
   margin-top: 0;
-  flex: 1 1 0;
+  flex: 0 1 auto;
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, 134px);
@@ -316,7 +316,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--admin-space-md);
-  align-self: stretch;
+  align-self: center;
 }
 
 .sold-out-transfer button {
@@ -362,7 +362,6 @@
 }
 
 .sold-out-save {
-  margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -396,7 +395,6 @@
 }
 
 .sold-out-panel__pagination {
-  margin-top: auto;
   padding-top: var(--admin-space-md);
 }
 

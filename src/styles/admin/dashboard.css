@@ -416,11 +416,14 @@
 
 .dashboard-trend__chart {
   width: 100%;
+  max-width: var(--admin-chart-track-max-width, 640px);
   height: 200px;
+  margin-inline: auto;
   padding: 20px;
   display: flex;
   gap: var(--admin-space-lg);
   align-items: flex-end;
+  justify-content: center;
   border-radius: 8px;
   background: var(--admin-surface-muted);
 }

@@ -230,6 +230,9 @@
 }
 .sales-compare-card__row i {
   display: block;
+  width: 100%;
+  max-width: var(--admin-chart-track-max-width, 640px);
+  margin-inline: auto;
   height: 8px;
   border-radius: 999px;
   background: var(--admin-cool-gray-50);

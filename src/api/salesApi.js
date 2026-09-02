@@ -19,9 +19,11 @@ export const salesApi = {
     return apiClient.get(API_ENDPOINTS.salesMonthly, { params: { year, month } });
   },
 
-  // daily 객체와 time-slots 배열을 별도 메서드로 유지한다. QA: 30/60분, 빈 시간대, 잘못된 날짜를 확인한다.
+  // API-017: 일별 매출 상세는 from=to(하루). to 생략 시 from과 동일.
   getDaily({ from, to } = {}) {
-    return apiClient.get(API_ENDPOINTS.salesDaily, { params: { from, to } });
+    return apiClient.get(API_ENDPOINTS.salesDaily, {
+      params: { from, to: to ?? from },
+    });
   },
 
   getDailyTimeSlots({ date, intervalMinutes }) {
