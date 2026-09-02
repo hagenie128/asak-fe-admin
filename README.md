@@ -16,6 +16,37 @@
 
 ---
 
+> **Personal Extension (Hajin)** — 팀 프로젝트 종료 이후 개인 포트폴리오 확장 저장소
+> Team Development: 2026.07 ~ 2026.09 · Freeze tag: `team-original-2026-09-02`
+> upstream: [hagenie128/ASAK-Admin](https://github.com/hagenie128/ASAK-Admin) (팀 원본, push 금지)
+
+| 버전 | 배포 |
+| --- | --- |
+| Team Original | https://admin.asak.stackroom.cloud |
+| Personal Extension (이 repo) | https://admin.hajin-asak.stackroom.cloud |
+
+## Project Origin
+
+**Original ASAK Team Project**
+
+| 영역 | 담당 |
+| --- | --- |
+| 프론트 | ASAK-Admin — 주문·메뉴 CRUD, 품절·결제수단 |
+
+## Personal Extension
+
+팀 종료(`team-original-2026-09-02`) 이후 개인적으로 추가·개선한 기능을 여기에 기록한다.
+
+## Original Repository
+
+- https://github.com/hagenie128/ASAK-Admin
+
+## Contribution
+
+- https://github.com/hagenie128/ASAK-Admin/commits?author=hagenie128
+
+---
+
 ## 0. 프로젝트 한눈에 보기
 
 ASAK 관리자 운영 화면 전용 **React + Vite** 애플리케이션입니다. 태블릿(1920×1080) 환경을 기준으로 만들고, 고객용 주문 키오스크는 별도 저장소인 `ASAK-Kiosk`에서 개발합니다.
