@@ -2,11 +2,11 @@
 import emptyBoxOpen from "../../../assets/figma/empty-box-open.svg";
 import {
   ORDER_STATUS,
-  PAYMENT_METHOD_LABEL,
   PAYMENT_STATUS,
 } from "../../../constants/orderLabels.js";
 import { formatCurrency } from "../../../utils/currency.js";
 import { formatDateTime } from "../../../utils/date.js";
+import { formatPaymentMethodLabel } from "../../../utils/receiptFormat.js";
 
 function getPositiveQuantity(value) {
   const quantity = Number(value);
@@ -93,11 +93,7 @@ export default function OrderDetailPanel({ selectedOrder, onClose, onRefund, onP
           ) : null}
           <div>
             <dt>결제수단</dt>
-            <dd>
-              {PAYMENT_METHOD_LABEL[selectedOrder.paymentMethod.methodName] ??
-                selectedOrder.paymentMethod.methodName ??
-                "-"}
-            </dd>
+            <dd>{formatPaymentMethodLabel(selectedOrder.paymentMethod)}</dd>
           </div>
         </dl>
 
