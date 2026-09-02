@@ -210,7 +210,7 @@ export function updateAdminOrderStatus(orderId, nextStatus) {
   };
 }
 
-/** 환불 stub — paymentStatus APPROVED → FAILED, orderStatus → CANCELED */
+/** 환불 stub — payment APPROVED→REFUNDED, 제공 전만 order CANCELED (실BE와 동일) */
 export function refundAdminOrder(orderId) {
   const order = adminMock.orders.data.content.find((row) => row.orderId === Number(orderId));
   if (!order) {
@@ -231,8 +231,12 @@ export function refundAdminOrder(orderId) {
       data: null,
     };
   }
-  order.paymentStatus = "FAILED";
-  order.orderStatus = "CANCELED";
+  order.paymentStatus = "REFUNDED";
+  order.refundedAt = new Date().toISOString();
+  if (order.orderStatus !== "COMPLETED") {
+    order.orderStatus = "CANCELED";
+    order.cancelledAt = order.refundedAt;
+  }
   return {
     success: true,
     status: 200,
@@ -254,12 +258,12 @@ export function printAdminOrderReceipt(orderId) {
       data: null,
     };
   }
-  if (order.paymentStatus !== "APPROVED") {
+  if (order.paymentStatus !== "APPROVED" && order.paymentStatus !== "REFUNDED") {
     return {
       success: false,
       status: 400,
       code: "ADMIN_ORDER_RECEIPT_NOT_ALLOWED",
-      message: "결제 완료된 주문만 영수증을 출력할 수 있습니다.",
+      message: "결제 완료 또는 환불된 주문만 영수증을 출력할 수 있습니다.",
       data: null,
     };
   }
