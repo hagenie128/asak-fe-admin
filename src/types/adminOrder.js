@@ -75,7 +75,8 @@
  * @property {string} orderStatus
  * @property {number} totalAmount
  * @property {string} createdAt
- * @property {number|null} elapsedSec
+ * @property {string|null} [paidAt] 결제 완료 시각. 경과시간 기준
+ * @property {number|null} elapsedSec 결제 완료 후 경과 초. 미결제는 null
  * @property {LiveOrderMenu[]|string|null} menus BE는 JSON raw, mock은 배열
  */
 

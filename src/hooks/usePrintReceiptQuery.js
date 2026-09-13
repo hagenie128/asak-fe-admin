@@ -4,6 +4,7 @@ import { ordersApi } from "../api/ordersApi.js";
 import { toast } from "../utils/toast.js";
 
 const POLL_INTERVAL_MS = 1000;
+const POLL_TIMEOUT_MS = 15000;
 
 /**
  * printReceipt(order)를 부를 때마다 독립된 토스트 1개 + 폴링 루프 1개를 새로 시작한다.
@@ -43,9 +44,17 @@ export function usePrintReceiptQuery() {
       return;
     }
 
-    // 완료/실패가 나올 때까지 1초 간격으로 폴링한다. PENDING/PROCESSING은 "완료"가 아니므로
-    // 토스트를 그대로 loading 상태로 유지한 채 계속 기다린다.
+    // 완료/실패가 나올 때까지 1초 간격으로 폴링한다. 15초 안에는 끝나야 한다.
+    const startedAt = Date.now();
     for (;;) {
+      if (Date.now() - startedAt >= POLL_TIMEOUT_MS) {
+        toastHandle.update(
+          `${label} 출력 시간 초과`,
+          "error",
+          "장치 응답이 없어 출력을 중단했습니다. 프린터 연결을 확인해 주세요.",
+        );
+        return;
+      }
       await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
       if (cancelledRef.current) return;
 

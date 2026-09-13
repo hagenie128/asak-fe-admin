@@ -74,12 +74,11 @@
 }
 
 .sales-daily__interval select:hover {
-  border-color: var(--admin-text-secondary);
+  border-color: var(--admin-interactive-hover);
 }
 
-.sales-daily__interval select:focus-visible {
-  outline: 2px solid var(--admin-brand-primary);
-  outline-offset: 2px;
+.sales-daily__interval select:active {
+  border-color: var(--admin-interactive-pressed);
 }
 
 .sales-daily__empty-hint {

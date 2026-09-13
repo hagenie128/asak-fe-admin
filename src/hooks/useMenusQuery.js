@@ -44,6 +44,23 @@ function getOptionGroupCatalog(groups = []) {
   return Array.isArray(groups) ? groups : [];
 }
 
+function sanitizeImageUrl(url) {
+  if (url == null || String(url).trim() === "") return null;
+  const value = String(url).trim();
+  if (value.startsWith("blob:")) return null;
+  return value;
+}
+
+async function resolveUploadedImage(payload) {
+  if (payload?.imageFile instanceof File) {
+    return menusApi.uploadMenuImage(payload.imageFile);
+  }
+  return {
+    mediaAssetId: payload?.mediaAssetId ?? null,
+    imageUrl: sanitizeImageUrl(payload?.imageUrl),
+  };
+}
+
 function buildListParams({ page, pageSize, selectedCategoryId, keyword }) {
   const params = {
     page,
@@ -188,12 +205,14 @@ export function useMenusQuery({
     };
   }, [selectedMenuId, tick]);
 
-  function updateMenu(menuId, payload) {
+  async function updateMenu(menuId, payload) {
+    const uploaded = await resolveUploadedImage(payload);
     const request = {
       categoryId: payload.categoryId ? Number(payload.categoryId) : null,
       name: payload.name,
       price: Number(payload.price) || 0,
-      imageUrl: payload.imageUrl || null,
+      mediaAssetId: uploaded.mediaAssetId || null,
+      imageUrl: uploaded.imageUrl || null,
       description: payload.description || null,
       isSoldOut: payload.isSoldOut === true,
       ingredients: (payload.ingredients ?? []).map((row) => ({
@@ -219,12 +238,14 @@ export function useMenusQuery({
     return menusApi.updateMenu(menuId, request);
   }
 
-  function createMenu(payload) {
+  async function createMenu(payload) {
+    const uploaded = await resolveUploadedImage(payload);
     const request = {
       categoryId: payload.categoryId ? Number(payload.categoryId) : null,
       name: payload.name,
       price: Number(payload.price) || 0,
-      imageUrl: payload.imageUrl || null,
+      mediaAssetId: uploaded.mediaAssetId || null,
+      imageUrl: uploaded.imageUrl || null,
       description: payload.description || null,
       isSoldOut: payload.isSoldOut === true,
       ingredients: (payload.ingredients ?? []).map((row) => ({

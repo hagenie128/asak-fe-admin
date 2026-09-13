@@ -1,0 +1,200 @@
+/*
+ * Figma Interactive 상태 (0718 Semantic/Interactive/*)
+ * hover / pressed / selected / focus-visible / disabled 를 공통으로 맞춘다.
+ * *:focus { outline: none } 전역 처리는 하지 않는다.
+ */
+
+.admin-sidebar__nav a:focus-visible,
+.admin-sidebar__logout:focus-visible,
+.admin-sidebar__caret-button:focus-visible,
+.admin-sidebar__brand:focus-visible,
+.admin-sidebar__promo-cta:focus-visible,
+.admin-sidebar__live-cta:focus-visible,
+.admin-login-card__submit:focus-visible,
+.admin-login-field input:focus-visible,
+.admin-search-input:focus-visible,
+.admin-async-state__primary:focus-visible,
+.admin-async-state__secondary:focus-visible,
+.admin-confirm__actions button:focus-visible,
+.admin-save-bar button:focus-visible,
+.payment-save-bar button:focus-visible,
+.admin-page__header > button:focus-visible,
+.menu-management__create:focus-visible,
+.admin-menu-card:focus-visible,
+.sold-out-card:focus-visible,
+.sold-out-tabs button:focus-visible,
+.sold-out-chips button:focus-visible,
+.sold-out-transfer button:focus-visible,
+.sales-summary__filters button:focus-visible,
+.sales-chart__bars .sales-chart__bar-btn:focus-visible,
+.sales-daily__interval select:focus-visible,
+.order-management__filters button:focus-visible,
+.order-management__page-btn:focus-visible,
+.order-management__page-nav:focus-visible,
+.order-management__table tbody tr:focus-visible,
+.payment-toggle:focus-visible,
+.payment-method-row__reorder button:focus-visible,
+.figma-order-card__actions button:focus-visible,
+.menu-edit-options__recommend select:focus-visible {
+  outline: none;
+  box-shadow: var(--admin-focus-ring);
+}
+
+.admin-sidebar__nav a.active:focus-visible {
+  box-shadow:
+    var(--admin-shadow-action-primary),
+    var(--admin-focus-ring);
+}
+
+.figma-order-card__actions button:last-child:focus-visible {
+  box-shadow:
+    var(--admin-shadow-action-primary),
+    var(--admin-focus-ring);
+}
+
+/* Primary lime fill: Default / Hover / Pressed / Disabled */
+.admin-login-card__submit:hover:not(:disabled),
+.admin-async-state__primary:hover:not(:disabled),
+.admin-page__header > button:hover:not(:disabled),
+.admin-save-bar button:hover:not(:disabled),
+.payment-save-bar button:hover:not(:disabled),
+.order-management__filters .order-management__search:hover:not(:disabled),
+.sold-out-transfer .is-primary:hover:not(:disabled),
+.menu-management__create:hover:not(:disabled),
+.admin-confirm--warning .admin-confirm__actions .is-primary:hover:not(:disabled) {
+  background: var(--admin-interactive-hover);
+}
+
+.admin-login-card__submit:active:not(:disabled),
+.admin-async-state__primary:active:not(:disabled),
+.admin-page__header > button:active:not(:disabled),
+.admin-save-bar button:active:not(:disabled),
+.payment-save-bar button:active:not(:disabled),
+.order-management__filters .order-management__search:active:not(:disabled),
+.sold-out-transfer .is-primary:active:not(:disabled),
+.menu-management__create:active:not(:disabled),
+.admin-confirm--warning .admin-confirm__actions .is-primary:active:not(:disabled) {
+  background: var(--admin-interactive-pressed);
+}
+
+.admin-login-card__submit:disabled,
+.admin-async-state__primary:disabled,
+.admin-page__header > button:disabled,
+.admin-save-bar button:disabled,
+.payment-save-bar button:disabled,
+.order-management__filters .order-management__search:disabled {
+  background: var(--admin-surface-disabled);
+  color: var(--admin-text-secondary);
+  cursor: not-allowed;
+}
+
+/* Sidebar: 선택은 라임 fill, 비선택은 배경만 */
+.admin-sidebar__nav a:not(.active):hover {
+  background: var(--admin-brand-subtle);
+  color: var(--admin-text-primary);
+}
+
+.admin-sidebar__nav a:not(.active):active {
+  background: color-mix(in srgb, var(--admin-interactive-pressed) 18%, var(--admin-brand-subtle));
+}
+
+.admin-sidebar__nav a.active:hover {
+  background: var(--admin-interactive-hover);
+}
+
+.admin-sidebar__nav a.active:active {
+  background: var(--admin-interactive-pressed);
+}
+
+.admin-sidebar__logout:hover:not(:disabled) {
+  background: var(--admin-ink-100);
+}
+
+.admin-sidebar__logout:active:not(:disabled) {
+  background: var(--admin-border);
+}
+
+.admin-sidebar__caret-button:hover {
+  background: var(--admin-brand-subtle);
+}
+
+.admin-sidebar__promo-cta:hover {
+  filter: brightness(1.08);
+}
+
+.admin-sidebar__promo-cta:active {
+  filter: brightness(0.92);
+}
+
+/* 보조 버튼·탭·칩: 라임 fill이 아닌 테두리/배경만 */
+.sold-out-tabs button:hover:not(:disabled):not(.is-selected),
+.sold-out-chips button:hover:not(:disabled):not(.is-selected),
+.sales-summary__filters button:hover:not(:disabled):not(.is-selected),
+.order-management__filters button:hover:not(:disabled):not(.is-active):not(.order-management__search),
+.order-management__page-btn:hover:not(:disabled),
+.order-management__page-nav:hover:not(:disabled),
+.sold-out-transfer button:hover:not(:disabled):not(.is-primary) {
+  border-color: var(--admin-interactive-hover);
+  background: var(--admin-brand-subtle);
+}
+
+.sold-out-tabs button:active:not(:disabled):not(.is-selected),
+.sold-out-chips button:active:not(:disabled):not(.is-selected),
+.sales-summary__filters button:active:not(:disabled):not(.is-selected),
+.order-management__filters button:active:not(:disabled):not(.is-active):not(.order-management__search),
+.order-management__page-btn:active:not(:disabled),
+.order-management__page-nav:active:not(:disabled) {
+  border-color: var(--admin-interactive-pressed);
+  background: color-mix(in srgb, var(--admin-interactive-pressed) 16%, var(--admin-panel));
+}
+
+.sales-summary__filters button.is-selected:hover:not(:disabled),
+.sold-out-tabs button.is-selected:hover:not(:disabled),
+.sold-out-chips button.is-selected:hover:not(:disabled) {
+  background: var(--admin-interactive-hover);
+}
+
+.sales-summary__filters button.is-selected:active:not(:disabled) {
+  background: var(--admin-interactive-pressed);
+}
+
+/* Live 주문 완료 버튼은 라임 fill. RECEIVED/READY는 상태색을 유지한다. */
+.figma-order-card__actions button:last-child:not(.RECEIVED):not(.READY):hover:not(:disabled) {
+  background: var(--admin-interactive-hover);
+}
+
+.figma-order-card__actions button:last-child:not(.RECEIVED):not(.READY):active:not(:disabled) {
+  background: var(--admin-interactive-pressed);
+}
+
+.figma-order-card__actions button:first-child:hover:not(:disabled) {
+  color: var(--admin-text-primary);
+}
+
+.figma-order-card__actions button:first-child:active:not(:disabled) {
+  color: var(--admin-interactive-pressed);
+}
+
+.payment-method-row:hover {
+  border-color: var(--admin-interactive-hover);
+}
+
+.payment-method-row:active {
+  border-color: var(--admin-interactive-pressed);
+}
+
+.payment-toggle:hover:not(:disabled):not(.payment-toggle--off) {
+  background: var(--admin-interactive-hover);
+}
+
+.payment-toggle:active:not(:disabled):not(.payment-toggle--off) {
+  background: var(--admin-interactive-pressed);
+}
+
+.admin-refund-reason-list label:hover {
+  border-color: var(--admin-interactive-hover);
+}
+
+.admin-refund-reason-list label:active {
+  border-color: var(--admin-interactive-pressed);
+}

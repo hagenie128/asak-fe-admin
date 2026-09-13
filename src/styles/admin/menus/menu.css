@@ -191,15 +191,26 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  border: 2px solid transparent;
   border-radius: 12px;
   background: var(--admin-panel);
   overflow: hidden;
   cursor: pointer;
+  box-sizing: border-box;
+}
+
+.admin-menu-card:hover:not(.is-selected) {
+  border-color: var(--admin-interactive-hover);
+  box-shadow: var(--admin-shadow-menu-card);
+}
+
+.admin-menu-card:active:not(.is-selected) {
+  border-color: var(--admin-interactive-pressed);
 }
 
 .admin-menu-card.is-selected {
-  outline: 2px solid var(--admin-brand-primary);
-  outline-offset: 1px;
+  border-color: var(--admin-interactive-default);
+  background: var(--admin-brand-subtle);
 }
 
 .menu-management__empty {
@@ -1133,9 +1144,11 @@ button.is-link {
 }
 
 .menu-edit-options__recommend select:focus {
-  border-color: var(--admin-brand-primary);
-  outline: 2px solid rgba(181, 227, 15, 0.28);
-  outline-offset: 1px;
+  border-color: var(--admin-interactive-default);
+}
+
+.menu-edit-options__recommend select:focus-visible {
+  border-color: var(--admin-interactive-default);
 }
 
 .menu-edit-options__optional {

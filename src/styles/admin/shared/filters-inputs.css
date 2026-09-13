@@ -20,7 +20,7 @@
 }
 
 .admin-search-input:focus {
-  border-color: var(--admin-brand-secondary);
+  border-color: var(--admin-interactive-default);
 }
 
 .admin-search-input:disabled {

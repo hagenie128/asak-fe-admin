@@ -76,30 +76,30 @@ export default function AdminSidebar({ model = MODELS.Desktop }) {
       </button>
 
       <nav className="admin-sidebar__nav" aria-label="관리자 메뉴">
-        <NavLink end to="/dashboard">
+        <NavLink end to="/dashboard" aria-label="Home">
           <img alt="" aria-hidden="true" src={dashboardIcon} />
           <span>Home</span>
         </NavLink>
-        <NavLink end to="/orders">
+        <NavLink end to="/orders" aria-label="주문 관리">
           <img alt="" aria-hidden="true" src={ordersIcon} />
           <span>주문 관리</span>
         </NavLink>
 
         {isTablet ? (
           <>
-            <NavLink end to="/menus">
+            <NavLink end to="/menus" aria-label="메뉴 관리">
               <img alt="" aria-hidden="true" src={menuIcon} />
               <span>메뉴 관리</span>
             </NavLink>
-            <NavLink end to="/sold-out">
+            <NavLink end to="/sold-out" aria-label="항목 품절 관리">
               <img alt="" aria-hidden="true" src={soldOutIcon} />
               <span>항목 품절 관리</span>
             </NavLink>
-            <NavLink end to="/payment-methods">
+            <NavLink end to="/payment-methods" aria-label="결제수단 설정">
               <img alt="" aria-hidden="true" src={paymentIcon} />
               <span>결제수단 설정</span>
             </NavLink>
-            <NavLink end to="/sales">
+            <NavLink end to="/sales" aria-label="매출 관리">
               <img alt="" aria-hidden="true" src={salesIcon} />
               <span>매출 관리</span>
             </NavLink>
@@ -108,7 +108,7 @@ export default function AdminSidebar({ model = MODELS.Desktop }) {
           <>
             <div className="admin-sidebar__group">
               <div className="admin-sidebar__group-row">
-                <NavLink end to="/sales">
+                <NavLink end to="/sales" aria-label="매출 관리">
                   <img alt="" aria-hidden="true" src={salesIcon} />
                   <span>매출 관리</span>
                 </NavLink>
@@ -138,15 +138,15 @@ export default function AdminSidebar({ model = MODELS.Desktop }) {
                 </>
               ) : null}
             </div>
-            <NavLink end to="/menus">
+            <NavLink end to="/menus" aria-label="메뉴 관리">
               <img alt="" aria-hidden="true" src={menuIcon} />
               <span>메뉴 관리</span>
             </NavLink>
-            <NavLink end to="/sold-out">
+            <NavLink end to="/sold-out" aria-label="항목 품절 관리">
               <img alt="" aria-hidden="true" src={soldOutIcon} />
               <span>항목 품절 관리</span>
             </NavLink>
-            <NavLink end to="/payment-methods">
+            <NavLink end to="/payment-methods" aria-label="결제수단 설정">
               <img alt="" aria-hidden="true" src={paymentIcon} />
               <span>결제수단 설정</span>
             </NavLink>
@@ -171,7 +171,7 @@ export default function AdminSidebar({ model = MODELS.Desktop }) {
         </NavLink>
       )}
 
-      <button type="button" className="admin-sidebar__logout" onClick={handleLogout}>
+      <button type="button" className="admin-sidebar__logout" aria-label="Logout" onClick={handleLogout}>
         <img alt="" aria-hidden="true" src={signOutIcon} />
         <span>Logout</span>
       </button>

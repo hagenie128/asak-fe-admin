@@ -7,7 +7,11 @@ import { apiClient } from "./apiClient.js";
 export const ordersApi = {
   orderList: (params) => apiClient.get(API_ENDPOINTS.orders, { params }),
   orderDetail: (orderId) => apiClient.get(API_ENDPOINTS.order(orderId)),
-  liveOrderList: () => apiClient.get(API_ENDPOINTS.liveOrders),
+  liveOrderList: () =>
+    apiClient.get(API_ENDPOINTS.liveOrders, {
+      timeout: 10000,
+      params: { t: Date.now() },
+    }),
   updateOrderStatus: (orderId, status) =>
     apiClient.patch(API_ENDPOINTS.orderStatus(orderId, status)),
   orderCancel: (orderId) => apiClient.patch(API_ENDPOINTS.orderCancel(orderId)),

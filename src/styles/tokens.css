@@ -14,6 +14,14 @@
   --admin-lime-soft: #c8f064; /* Color/Green/200 (차트 막대) */
   --admin-deep-green: #5b8c2a; /* Color/Green/600 */
 
+  /* Interactive — Semantic/Interactive/* (Kiosk tokens.css와 동일 0718 정본) */
+  --admin-interactive-default: #b5e30f; /* Interactive/Default = Brand/Primary */
+  --admin-interactive-hover: #b3e500; /* Interactive/Hover · Lime/500 */
+  --admin-interactive-pressed: #9cc600; /* Interactive/Pressed · Green/400 */
+  --admin-interactive-disabled: #33383d; /* Surface/100. 비활성 텍스트용. 버튼 fill로 쓰지 말 것 */
+  --admin-focus-ring-color: rgba(181, 227, 15, 0.5); /* Focus Ring 50% */
+  --admin-focus-ring: 0 0 0 3px var(--admin-focus-ring-color);
+
   /* Surface / BG — Semantic/BG/* */
   --admin-bg: #f7f7f7; /* BG/Page/Admin · Neutral/50 */
   --admin-page-bg: #f7f7f7;
@@ -160,7 +168,7 @@
   --admin-font-size-time: 20px;
   --admin-line-height-time: 28px;
   --admin-sidebar-width: 240px;
-  --admin-sidebar-compact-width: 88px;
+  --admin-sidebar-compact-width: 90px; /* Figma Tablet rail 150:4865 */
 
   /* Figma Admin 캔버스 (스케일 기준) */
   --admin-canvas-w: 1920px;

@@ -192,16 +192,15 @@
 }
 
 .sold-out-card:hover {
-  border-color: #c5e86c;
+  border-color: var(--admin-interactive-hover);
 }
 
-.sold-out-card:focus-visible {
-  outline: 2px solid var(--admin-brand-primary);
-  outline-offset: 2px;
+.sold-out-card:active {
+  border-color: var(--admin-interactive-pressed);
 }
 
 .sold-out-card.is-checked {
-  border: 2px solid var(--admin-brand-primary);
+  border: 2px solid var(--admin-interactive-default);
 }
 
 .sold-out-card__image {

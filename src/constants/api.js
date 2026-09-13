@@ -20,6 +20,7 @@ export const API_ENDPOINTS = Object.freeze({
 
   menus: `${API_BASE_PATH}/menus`,
   menu: (menuId) => `${API_BASE_PATH}/menus/${menuId}`,
+  menuImages: `${API_BASE_PATH}/menus/images`,
   menuCategories: `${API_BASE_PATH}/menus/categories`,
   menuIngredients: `${API_BASE_PATH}/menus/ingredients`,
   optionGroups: `${API_BASE_PATH}/opts/groups`,
