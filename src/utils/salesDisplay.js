@@ -314,13 +314,18 @@ export function toShareRows(shares = []) {
     };
   });
 
-  const max = Math.max(...normalized.map((row) => row.percent), 1);
-  return normalized.map((row, index) => [
-    row.label,
-    `${row.percent}%`,
-    `${Math.round((row.percent / max) * 100)}%`,
-    index === 0,
-  ]);
+  // 비중 막대의 기준은 전체 100%다. 최댓값으로 정규화하면 1등 항목이 항상
+  // 막대를 꽉 채워, 바로 옆에 적힌 숫자(예: 89.8%)와 길이가 어긋난다.
+  return normalized.map((row, index) => {
+    // 93.33%처럼 소수 둘째 자리까지 보이면 읽기 어렵다. 첫째 자리에서 끊는다.
+    const percent = Math.round(row.percent * 10) / 10;
+    return [
+      row.label,
+      `${percent}%`,
+      `${Math.min(100, Math.max(0, percent))}%`,
+      index === 0,
+    ];
+  });
 }
 
 /** 차트 막대 높이(px) — 값 비율로 스케일. 0은 빈 칸으로 둔다. */

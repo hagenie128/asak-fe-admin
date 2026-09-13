@@ -79,7 +79,9 @@
 
 /* KPI Cards (227:5664) — 1008×120, gap 16 */
 .admin-dashboard__kpis {
-  width: 1008px;
+  /* Figma 1920 시안의 픽셀값(1008/1080/1616)을 그대로 두면 컨테이너(1600) 대비
+     행마다 폭이 달라져 오른쪽 가장자리가 들쭉날쭉해진다. 행은 항상 폭을 채운다. */
+  width: 100%;
   max-width: 100%;
   height: 120px;
   flex: 0 0 auto;
@@ -136,7 +138,7 @@
 
 /* MiddleSection — 폭만 유지, 높이는 콘텐츠에 맞춤 */
 .admin-dashboard__middle {
-  width: 1080px;
+  width: 100%;
   max-width: 100%;
   flex: 0 0 auto;
   display: flex;
@@ -147,7 +149,7 @@
 /* Dashboard Recent Orders Panel — 콘텐츠 높이 */
 .dashboard-orders {
   width: 544px;
-  flex: 0 1 544px;
+  flex: 1 1 544px;
   min-width: 0;
   height: auto;
   gap: 12px;
@@ -247,7 +249,7 @@
 /* Dashboard Status Summary Panel — 콘텐츠 높이 */
 .dashboard-status-summary {
   width: 520px;
-  flex: 0 1 520px;
+  flex: 1 1 520px;
   min-width: 0;
   height: auto;
   gap: 12px;
@@ -341,7 +343,7 @@
 
 /* BottomSection — 폭만 유지, 높이는 콘텐츠에 맞춤 */
 .admin-dashboard__bottom {
-  width: 1616px;
+  width: 100%;
   max-width: 100%;
   flex: 0 0 auto;
   display: flex;

@@ -418,6 +418,8 @@
   padding: var(--admin-space-lg);
   display: flex;
   flex-direction: column;
+  /* .sales-summary가 align-items:flex-start라 width가 없으면 내용 폭으로 줄어든다 */
+  width: 100%;
   gap: var(--admin-space-md);
   border: 1px solid var(--admin-border);
   border-radius: 8px;
@@ -441,10 +443,16 @@
 
 .sales-table__head,
 .sales-table__row {
+  /* 패널 높이(320px)를 넘는 행은 잘리지 않고 이 영역 안에서 스크롤된다 */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   align-items: center;
   gap: var(--admin-space-md);
   font-size: 13px;
+  /* 높이가 눌리면 스크롤 대신 행이 찌그러진다 */
+  flex: 0 0 auto;
   line-height: 18px;
 }
 
@@ -453,6 +461,9 @@
   padding: 8px var(--admin-space-md);
   border-radius: 4px;
   background: #f9fafb;
+  position: sticky;
+  top: 0;
+  z-index: 1;
   color: var(--admin-text-secondary);
   font-weight: 400;
 }
