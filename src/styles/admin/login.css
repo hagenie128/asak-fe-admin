@@ -154,12 +154,13 @@
   height: 48px;
   border: 0;
   border-radius: 8px;
-  background: var(--admin-brand-primary);
+  background: var(--admin-interactive-default);
   color: var(--admin-text-on-dark);
   font-family: inherit;
   font-size: 16px;
   line-height: 24px;
   font-weight: 700;
+  cursor: pointer;
 }
 
 .admin-login-card small {

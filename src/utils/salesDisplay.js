@@ -140,48 +140,29 @@ export function eachYmd(from, to) {
   return days;
 }
 
-function hashSeed(value) {
-  let hash = 2166136261;
-  for (const char of String(value)) {
-    hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
-  }
-  return hash >>> 0;
-}
-
-/** 빈 날짜용 샐러드 키오스크 규모 더미. 같은 날짜는 새로고침해도 같은 값이다. */
-export function makeDummyDay(ymd) {
-  const date = parseYmd(ymd);
-  const weekend = date && (date.getDay() === 0 || date.getDay() === 6);
-  const seed = hashSeed(`asak-day-${ymd}`);
-  const orderCount = Math.max(8, (weekend ? 26 : 16) + (seed % 9) - 4);
-  const avgAmount = 15000 + (seed % 8) * 500;
-  const totalAmount = orderCount * avgAmount;
+function emptyDay(ymd, { isFuture = false, isPlaceholder = false } = {}) {
   return {
     date: ymd,
-    orderCount,
-    totalAmount,
-    avgAmount,
-    isDummy: true,
-    isFuture: false,
+    orderCount: 0,
+    totalAmount: 0,
+    avgAmount: 0,
+    isDummy: false,
+    isFuture,
+    isPlaceholder,
   };
 }
 
-export function fillDailyRows(rows, from, to, { dummyThrough, today, placeholders = false } = {}) {
+/**
+ * API에 없는 날짜는 0으로 채운다. 가짜 매출을 만들지 않는다.
+ * placeholders=true 이면 빈 칸을 차트/표에서 "—" 로 구분한다.
+ */
+export function fillDailyRows(rows, from, to, { today, placeholders = false } = {}) {
   const dayToday = today ?? todayYmdFromDate();
-  const lastDummy = dummyThrough ?? tomorrowYmd();
   const byDate = new Map((rows ?? []).map((row) => [row.date, row]));
 
   return eachYmd(from, to).map((date) => {
     if (date > dayToday) {
-      return {
-        date,
-        orderCount: 0,
-        totalAmount: 0,
-        avgAmount: 0,
-        isDummy: false,
-        isFuture: true,
-        isPlaceholder: false,
-      };
+      return emptyDay(date, { isFuture: true });
     }
 
     const existing = byDate.get(date);
@@ -200,29 +181,7 @@ export function fillDailyRows(rows, from, to, { dummyThrough, today, placeholder
       };
     }
 
-    if (placeholders) {
-      return {
-        date,
-        orderCount: 0,
-        totalAmount: 0,
-        avgAmount: 0,
-        isDummy: false,
-        isFuture: false,
-        isPlaceholder: true,
-      };
-    }
-
-    if (date <= lastDummy) return makeDummyDay(date);
-
-    return {
-      date,
-      orderCount: 0,
-      totalAmount: 0,
-      avgAmount: 0,
-      isDummy: false,
-      isFuture: false,
-      isPlaceholder: false,
-    };
+    return emptyDay(date, { isPlaceholder: placeholders });
   });
 }
 
@@ -255,9 +214,7 @@ export function kpisFromRows(rows) {
   return { orderCount, totalAmount, avgAmount };
 }
 
-const LUNCH_DINNER_WEIGHTS = [4, 8, 18, 16, 10, 6, 5, 8, 12, 8, 4, 1];
-
-export function fillHourlySlots(slots, { intervalMinutes = 60, dummyDay = null } = {}) {
+export function fillHourlySlots(slots, { intervalMinutes = 60 } = {}) {
   const byKey = new Map();
   (slots ?? []).forEach((slot) => {
     const hour = slot.salesHour ?? slot.hour;
@@ -265,32 +222,12 @@ export function fillHourlySlots(slots, { intervalMinutes = 60, dummyDay = null }
     byKey.set(`${hour}:${minute}`, slot);
   });
 
-  const dummyByHour = new Map();
-  if (dummyDay && dummyDay.orderCount > 0) {
-    const weightSum = LUNCH_DINNER_WEIGHTS.reduce((sum, value) => sum + value, 0);
-    LUNCH_DINNER_WEIGHTS.forEach((weight, index) => {
-      const hour = 10 + index;
-      const orderCount = Math.max(0, Math.round((dummyDay.orderCount * weight) / weightSum));
-      dummyByHour.set(hour, {
-        hour,
-        minute: 0,
-        orderCount,
-        totalAmount: orderCount * dummyDay.avgAmount,
-        avgAmount: orderCount ? dummyDay.avgAmount : 0,
-      });
-    });
-  }
-
   const filled = [];
   for (let hour = 10; hour < 22; hour += 1) {
     for (let minute = 0; minute < 60; minute += intervalMinutes) {
       const existing = byKey.get(`${hour}:${minute}`);
       if (existing) {
         filled.push(existing);
-        continue;
-      }
-      if (intervalMinutes === 60 && dummyByHour.has(hour)) {
-        filled.push(dummyByHour.get(hour));
         continue;
       }
       filled.push({ hour, minute, orderCount: 0, totalAmount: 0, avgAmount: 0 });
@@ -314,13 +251,18 @@ export function toShareRows(shares = []) {
     };
   });
 
-  const max = Math.max(...normalized.map((row) => row.percent), 1);
-  return normalized.map((row, index) => [
-    row.label,
-    `${row.percent}%`,
-    `${Math.round((row.percent / max) * 100)}%`,
-    index === 0,
-  ]);
+  // 비중 막대의 기준은 전체 100%다. 최댓값으로 정규화하면 1등 항목이 항상
+  // 막대를 꽉 채워, 바로 옆에 적힌 숫자(예: 89.8%)와 길이가 어긋난다.
+  return normalized.map((row, index) => {
+    // 93.33%처럼 소수 둘째 자리까지 보이면 읽기 어렵다. 첫째 자리에서 끊는다.
+    const percent = Math.round(row.percent * 10) / 10;
+    return [
+      row.label,
+      `${percent}%`,
+      `${Math.min(100, Math.max(0, percent))}%`,
+      index === 0,
+    ];
+  });
 }
 
 /** 차트 막대 높이(px) — 값 비율로 스케일. 0은 빈 칸으로 둔다. */

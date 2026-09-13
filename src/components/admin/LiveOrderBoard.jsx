@@ -2,7 +2,8 @@
  * SCR-009 / Live Order
  * API: GET /api/admin/orders/live
  * 응답: data.content[]의 orderId, orderNo, orderTypeLabel, orderStatus,
- * totalAmount, createdAt, menus[]를 주문 카드에 표시한다.
+ * totalAmount, createdAt, paidAt, elapsedSec, menus[]를 주문 카드에 표시한다.
+ * 경과시간은 결제 완료(paidAt) 기준, 현재 시각과의 차이이다.
  */
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ordersApi } from "../../api/ordersApi.js";
@@ -11,7 +12,12 @@ import excludeIcon from "../../assets/figma/icon-order-exclude.svg";
 import plusIcon from "../../assets/figma/icon-order-plus.svg";
 import chipBagIcon from "../../assets/figma/icon-order-side.svg";
 import { formatCurrency } from "../../utils/currency.js";
-import { formatDate, formatTime } from "../../utils/date.js";
+import {
+  elapsedSecondsSince,
+  formatDate,
+  formatElapsedClock,
+  formatTime,
+} from "../../utils/date.js";
 import { toast } from "../../utils/toast.js";
 import { createOrderCompletedMessage, speak } from "../../utils/ttsMessages.js";
 import AdminAsyncState from "./shared/AdminAsyncState.jsx";
@@ -36,6 +42,7 @@ const OPTION_TONE_ORDER = ["exclude", "plus", "side", "drink"];
 const MENU_CARD_WIDTH = 340;
 const MENU_CARD_GAP = 8;
 const ORDER_CARD_HORIZONTAL_PADDING = 40;
+const LIVE_POLL_MS = 2000;
 
 const WIDE_LAYOUT_CLASS = "figma-order-card--wide";
 // 상단바(72px)와 주문 영역 상·하단 여백(48px)
@@ -53,6 +60,16 @@ function measureStackedHeight(card) {
   const children = Array.from(card.children);
   const content = children.reduce((sum, child) => sum + child.getBoundingClientRect().height, 0);
   return padding + content + gap * Math.max(0, children.length - 1);
+}
+
+function getPaidAt(order) {
+  return order?.paidAt ?? order?.approvedAt ?? null;
+}
+
+function getLiveElapsedSeconds(order, nowMs) {
+  const paidAt = getPaidAt(order);
+  if (!paidAt) return null;
+  return elapsedSecondsSince(paidAt, nowMs);
 }
 
 function sortOptionsByTone(options) {
@@ -113,7 +130,7 @@ function MenuCard({ menu }) {
   );
 }
 
-function OrderCard({ order, onAction, actionPending = false }) {
+function OrderCard({ order, now, onAction, actionPending = false }) {
   const menus = order.menus ?? [];
   const cardRef = useRef(null);
   const [requiresWideLayout, setRequiresWideLayout] = useState(false);
@@ -128,6 +145,9 @@ function OrderCard({ order, onAction, actionPending = false }) {
     PREPARING: { label: "완료 처리", nextStatus: "COMPLETED" },
   };
   const actionConfig = actionByStatus[order.orderStatus];
+  const paidAt = getPaidAt(order);
+  const elapsedSeconds = getLiveElapsedSeconds(order, now);
+  const showElapsed = Boolean(paidAt) && order.orderStatus !== "READY";
 
   useLayoutEffect(() => {
     const card = cardRef.current;
@@ -171,7 +191,9 @@ function OrderCard({ order, onAction, actionPending = false }) {
     >
       <header className="figma-order-card__header">
         <strong>{liveOrderNo}</strong>
-        <time dateTime={order.createdAt}>주문완료 {formatTime(order.createdAt)}</time>
+        {showElapsed ? (
+          <time dateTime={paidAt}>경과 {formatElapsedClock(elapsedSeconds)}</time>
+        ) : null}
       </header>
       <span
         className={`figma-order-card__type${order.orderTypeLabel === "포장" ? " figma-order-card__type--takeout" : ""}`}
@@ -229,6 +251,8 @@ export default function LiveOrderBoard() {
   const [now, setNow] = useState(() => Date.now());
   const boardRef = useRef(null);
   const inFlightRef = useRef(false);
+  const pendingRefreshRef = useRef(false);
+  const mountedRef = useRef(true);
 
   function moveToEdge(position) {
     const board = boardRef.current;
@@ -242,7 +266,10 @@ export default function LiveOrderBoard() {
 
   const refresh = useCallback(async (options = {}) => {
     const showLoading = options.showLoading !== false;
-    if (inFlightRef.current) return;
+    if (inFlightRef.current) {
+      pendingRefreshRef.current = true;
+      return;
+    }
     inFlightRef.current = true;
     if (showLoading) setStatus("loading");
 
@@ -259,15 +286,34 @@ export default function LiveOrderBoard() {
       }
     } finally {
       inFlightRef.current = false;
+      if (pendingRefreshRef.current && mountedRef.current) {
+        pendingRefreshRef.current = false;
+        refresh({ showLoading: false });
+      }
     }
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
     const pollId = window.setInterval(() => {
       refresh({ showLoading: false });
-    }, 5000);
-    return () => window.clearInterval(pollId);
+    }, LIVE_POLL_MS);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        refresh({ showLoading: false });
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+
+    return () => {
+      mountedRef.current = false;
+      window.clearInterval(pollId);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
   }, [refresh]);
 
   useEffect(() => {
@@ -398,6 +444,7 @@ export default function LiveOrderBoard() {
               <OrderCard
                 key={order.orderId}
                 order={order}
+                now={now}
                 onAction={handleOrder}
                 actionPending={actionPending}
               />

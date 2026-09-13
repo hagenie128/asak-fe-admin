@@ -3,8 +3,9 @@
  * 현재 코드 역할: Sidebar + Header + 본문(children) 셸.
  *
  * 정본: docs/Figma 1920×1080 Desktop.
+ * 사이드바는 해상도와 관계없이 Desktop 240px을 유지한다.
  * 본문은 contain scale로 비율을 유지하고,
- * 사이드바만 뷰포트 높이(100dvh)를 채운다.
+ * 글자가 0.75배 아래로 줄어들지 않도록 최소 스케일을 둔다.
  *
  * 데이터 흐름:
  *   main.jsx → AdminApp → AdminLayout → children Page
@@ -17,6 +18,7 @@ const CANVAS_W = 1920;
 const CANVAS_H = 1080;
 const SIDEBAR_W = 240;
 const MAIN_W = CANVAS_W - SIDEBAR_W;
+const MIN_READABLE_SCALE = 0.75;
 
 function useAdminCanvasScale() {
   const [scale, setScale] = useState(1);
@@ -25,8 +27,9 @@ function useAdminCanvasScale() {
     const update = () => {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const next = Math.min(vw / CANVAS_W, vh / CANVAS_H);
-      setScale(Number.isFinite(next) && next > 0 ? next : 1);
+      const fit = Math.min(vw / CANVAS_W, vh / CANVAS_H, 1);
+      const next = Number.isFinite(fit) && fit > 0 ? Math.max(fit, MIN_READABLE_SCALE) : 1;
+      setScale(next);
     };
     update();
     window.addEventListener("resize", update);

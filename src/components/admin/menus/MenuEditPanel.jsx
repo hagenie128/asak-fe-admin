@@ -377,6 +377,8 @@ export default function MenuEditPanel({
   function handleSave() {
     onSave?.({
       ...form,
+      imageUrl: imageFile ? "" : form.imageUrl,
+      imageFile,
       price: Number(form.price) || 0,
       categoryId:
         form.categoryId === "" || form.categoryId == null ? null : Number(form.categoryId),

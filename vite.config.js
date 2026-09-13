@@ -8,6 +8,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      workbox: {
+        navigateFallbackDenylist: [/^\/api/],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith("/api"),
+            handler: "NetworkOnly",
+          },
+        ],
+      },
       manifest: {
         name: "ASAK Admin",
         short_name: "ASAK Admin",
@@ -57,6 +66,10 @@ export default defineConfig({
     proxy: {
       "/api": {
         target: "http://localhost:8080",
+        changeOrigin: true,
+      },
+      "/uploads": {
+        target: "http://127.0.0.1:8081",
         changeOrigin: true,
       },
     },

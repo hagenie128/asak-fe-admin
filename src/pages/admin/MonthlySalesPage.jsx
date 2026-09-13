@@ -1,5 +1,5 @@
 /* SCR-020 / Monthly Sales */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import AdminAsyncState from "../../components/admin/shared/AdminAsyncState.jsx";
 import AdminTopHeader from "../../components/admin/shared/AdminTopHeader.jsx";
 import AdminDatePicker from "../../components/admin/shared/AdminDatePicker.jsx";
@@ -14,7 +14,6 @@ import {
   formatMonthlyNavLabel,
   startOfMonthYmd,
   toBarHeights,
-  tomorrowYmd,
   toYearMonthKey,
   weekdayLabel,
 } from "../../utils/salesDisplay.js";
@@ -23,7 +22,6 @@ export default function MonthlySalesPage() {
   const today = todayYmd();
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [month, setMonth] = useState(() => new Date().getMonth() + 1);
-  const [monthReady, setMonthReady] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const monthKey = toYearMonthKey(year, month);
   const monthEndFull = endOfMonthYmd(year, month);
@@ -49,31 +47,12 @@ export default function MonthlySalesPage() {
   const baseYear = monthlyData?.year ?? new Date().getFullYear();
   const label = formatMonthlyNavLabel(year, month, baseYear);
 
-  useEffect(() => {
-    if (monthReady || monthlyStatus !== "success") return;
-    const currentRow = (monthlyData?.rows ?? []).find((row) => row.month === monthKey);
-    if (!currentRow?.totalAmount) {
-      const lastWithSales = [...(monthlyData?.rows ?? [])]
-        .reverse()
-        .find((row) => (row.totalAmount ?? 0) > 0);
-      if (lastWithSales?.month) {
-        const [y, m] = lastWithSales.month.split("-").map(Number);
-        setYear(y);
-        setMonth(m);
-      }
-    }
-    setMonthReady(true);
-  }, [monthReady, monthlyData, monthlyStatus, monthKey]);
-
   const monthRow = useMemo(() => {
     return (monthlyData?.rows ?? []).find((row) => row.month === monthKey) ?? null;
   }, [monthlyData, monthKey]);
 
   const monthDays = useMemo(() => {
-    return fillDailyRows(dailyData?.rows, dailyFrom, monthEndFull, {
-      dummyThrough: tomorrowYmd(),
-      today,
-    });
+    return fillDailyRows(dailyData?.rows, dailyFrom, monthEndFull, { today });
   }, [dailyData, dailyFrom, monthEndFull, today]);
 
   const salesValues = monthDays.map((row) => (row.isFuture ? 0 : row.totalAmount));

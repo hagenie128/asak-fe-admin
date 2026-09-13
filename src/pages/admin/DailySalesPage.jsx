@@ -20,7 +20,6 @@ import {
   toBarHeights,
   todayYmd,
   toShareRows,
-  tomorrowYmd,
 } from "../../utils/salesDisplay.js";
 
 const { min: CALENDAR_MIN } = calendarYearBounds();
@@ -47,7 +46,6 @@ function formatHourRange(startHour, startMinute, endHour, endMinute) {
 
 export default function DailySalesPage() {
   const today = todayYmd();
-  const tomorrow = tomorrowYmd();
   const [selectedDate, setSelectedDate] = useState(today);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [intervalMinutes, setIntervalMinutes] = useState(60);
@@ -85,29 +83,20 @@ export default function DailySalesPage() {
 
   const monthDays = useMemo(
     () =>
-      fillDailyRows(monthSummary?.dailySales, monthFrom, monthTo, {
-        dummyThrough: tomorrow,
-        today,
-      }),
-    [monthSummary, monthFrom, monthTo, tomorrow, today],
+      fillDailyRows(monthSummary?.dailySales, monthFrom, monthTo, { today }),
+    [monthSummary, monthFrom, monthTo, today],
   );
 
   const selectedRow = useMemo(() => {
-    const rows = fillDailyRows(data?.rows, selectedDate, selectedDate, {
-      dummyThrough: tomorrow,
-      today,
-    });
+    const rows = fillDailyRows(data?.rows, selectedDate, selectedDate, { today });
     return rows[0] ?? null;
-  }, [data, selectedDate, tomorrow, today]);
+  }, [data, selectedDate, today]);
 
   const prevRow = useMemo(() => {
     if (!canFetchPrev) return null;
-    const rows = fillDailyRows(prevDayData?.rows, prevDate, prevDate, {
-      dummyThrough: tomorrow,
-      today,
-    });
+    const rows = fillDailyRows(prevDayData?.rows, prevDate, prevDate, { today });
     return rows[0] ?? null;
-  }, [canFetchPrev, prevDayData, prevDate, tomorrow, today]);
+  }, [canFetchPrev, prevDayData, prevDate, today]);
 
   const {
     data: timeSlotData,
@@ -118,7 +107,7 @@ export default function DailySalesPage() {
 
   const hourly = fillHourlySlots(
     (timeSlotStatus === "success" ? timeSlotData : []).map(toTimeSlot),
-    { intervalMinutes, dummyDay: selectedRow?.isDummy ? selectedRow : null },
+    { intervalMinutes },
   ).map(toTimeSlot);
 
   const ranking = ((selectedDate && data?.ranking?.[selectedDate]) || []).slice(0, 5);

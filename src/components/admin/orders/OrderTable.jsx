@@ -61,26 +61,39 @@ export default function OrderTable({
         </tr>
       </thead>
       <tbody>
-        {orders.map((order) => (
-          <tr
-            key={order.orderId}
-            className={order.orderId === selectedOrderId ? "is-selected" : ""}
-            onClick={() => onOrderDetail(order.orderId)}
-          >
-            <td>{order.orderNo}</td>
-            <td>{formatDate(order.createdAt)}</td>
-            <td>{ORDER_TYPE_LABEL[order.orderType] ?? order.orderType}</td>
-            <td>{order.menuSummary}</td>
-            <td>{order.itemCount}</td>
-            <td>{formatCurrency(order.totalAmount)}</td>
-            <td>
-              <OrderStatusBadge orderStatus={order.orderStatus} />
-            </td>
-            <td>
-              <OrderStatusBadge paymentStatus={order.paymentStatus} />
-            </td>
-          </tr>
-        ))}
+        {orders.map((order) => {
+          const selected = order.orderId === selectedOrderId;
+          return (
+            <tr
+              key={order.orderId}
+              className={selected ? "is-selected" : ""}
+              tabIndex={0}
+              role="button"
+              aria-pressed={selected}
+              aria-label={`${order.orderNo} 주문 상세 열기`}
+              onClick={() => onOrderDetail(order.orderId)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onOrderDetail(order.orderId);
+                }
+              }}
+            >
+              <td>{order.orderNo}</td>
+              <td>{formatDate(order.createdAt)}</td>
+              <td>{ORDER_TYPE_LABEL[order.orderType] ?? order.orderType}</td>
+              <td>{order.menuSummary}</td>
+              <td>{order.itemCount}</td>
+              <td>{formatCurrency(order.totalAmount)}</td>
+              <td>
+                <OrderStatusBadge orderStatus={order.orderStatus} />
+              </td>
+              <td>
+                <OrderStatusBadge paymentStatus={order.paymentStatus} />
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
