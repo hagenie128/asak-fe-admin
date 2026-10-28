@@ -64,3 +64,24 @@ export function formatTime(value) {
     second: "2-digit",
   });
 }
+
+/** 경과 초 → `HH:MM:SS`. 하루 이상이면 `N일 HH:MM:SS`. */
+export function formatElapsedClock(seconds) {
+  const n = Number(seconds);
+  const total = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  const days = Math.floor(total / 86400);
+  const remain = total % 86400;
+  const hours = String(Math.floor(remain / 3600)).padStart(2, "0");
+  const minutes = String(Math.floor((remain % 3600) / 60)).padStart(2, "0");
+  const secs = String(remain % 60).padStart(2, "0");
+  const time = `${hours}:${minutes}:${secs}`;
+  return days > 0 ? `${days}일 ${time}` : time;
+}
+
+/** 시작 시각부터 now까지 지난 초. 시작 시각이 없으면 0. */
+export function elapsedSecondsSince(start, now = Date.now()) {
+  const from = toDate(start);
+  const until = toDate(now) ?? new Date();
+  if (!from) return 0;
+  return Math.max(0, Math.floor((until.getTime() - from.getTime()) / 1000));
+}
