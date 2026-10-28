@@ -20,7 +20,6 @@ import {
   toBarHeights,
   todayYmd,
   toShareRows,
-  tomorrowYmd,
 } from "../../utils/salesDisplay.js";
 
 const { min: CALENDAR_MIN } = calendarYearBounds();
@@ -47,7 +46,6 @@ function formatHourRange(startHour, startMinute, endHour, endMinute) {
 
 export default function DailySalesPage() {
   const today = todayYmd();
-  const tomorrow = tomorrowYmd();
   const [selectedDate, setSelectedDate] = useState(today);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [intervalMinutes, setIntervalMinutes] = useState(60);
@@ -76,7 +74,7 @@ export default function DailySalesPage() {
   });
 
   // 월간 미니 차트만 summary(기간) API로 일별 행을 가져온다.
-  const { data: monthSummary, status: monthStatus } = useSalesQuery({
+  const { data: monthSummary, status: monthStatus, error: monthError, refetch: refetchMonth } = useSalesQuery({
     mode: "summary",
     period: null,
     startDate: monthFrom,
@@ -85,29 +83,20 @@ export default function DailySalesPage() {
 
   const monthDays = useMemo(
     () =>
-      fillDailyRows(monthSummary?.dailySales, monthFrom, monthTo, {
-        dummyThrough: tomorrow,
-        today,
-      }),
-    [monthSummary, monthFrom, monthTo, tomorrow, today],
+      fillDailyRows(monthSummary?.dailySales, monthFrom, monthTo, { today }),
+    [monthSummary, monthFrom, monthTo, today],
   );
 
   const selectedRow = useMemo(() => {
-    const rows = fillDailyRows(data?.rows, selectedDate, selectedDate, {
-      dummyThrough: tomorrow,
-      today,
-    });
+    const rows = fillDailyRows(data?.rows, selectedDate, selectedDate, { today });
     return rows[0] ?? null;
-  }, [data, selectedDate, tomorrow, today]);
+  }, [data, selectedDate, today]);
 
   const prevRow = useMemo(() => {
     if (!canFetchPrev) return null;
-    const rows = fillDailyRows(prevDayData?.rows, prevDate, prevDate, {
-      dummyThrough: tomorrow,
-      today,
-    });
+    const rows = fillDailyRows(prevDayData?.rows, prevDate, prevDate, { today });
     return rows[0] ?? null;
-  }, [canFetchPrev, prevDayData, prevDate, tomorrow, today]);
+  }, [canFetchPrev, prevDayData, prevDate, today]);
 
   const {
     data: timeSlotData,
@@ -118,7 +107,7 @@ export default function DailySalesPage() {
 
   const hourly = fillHourlySlots(
     (timeSlotStatus === "success" ? timeSlotData : []).map(toTimeSlot),
-    { intervalMinutes, dummyDay: selectedRow?.isDummy ? selectedRow : null },
+    { intervalMinutes },
   ).map(toTimeSlot);
 
   const ranking = ((selectedDate && data?.ranking?.[selectedDate]) || []).slice(0, 5);
@@ -126,25 +115,28 @@ export default function DailySalesPage() {
     paymentShare: [],
     orderShare: [],
   };
-  const hasDayData = Boolean(selectedRow && !selectedRow.isFuture && selectedRow.totalAmount > 0);
+  const hasDayData = Boolean(selectedRow?.hasData);
 
   const monthAmounts = monthDays.map((row) => (row.isFuture ? 0 : row.totalAmount));
   const monthBars = toBarHeights(monthAmounts, 70);
-  const monthPeakIndex = findMaxIndex(monthAmounts);
+  const monthPeakIndex = monthDays.some((row) => row.hasData)
+    ? findMaxIndex(monthDays.map((row) => (row.hasData ? row.totalAmount : -Infinity)))
+    : -1;
 
   const hourlyAmounts = hourly.map((h) => h.totalAmount);
   const hourlyBars = toBarHeights(hourlyAmounts, 70);
   const peakIndex = findMaxIndex(hourlyAmounts);
   const peakHour = peakIndex >= 0 ? hourly[peakIndex] : null;
 
+  const comparable = selectedRow?.hasData && prevRow?.hasData;
   const totalDelta = formatDelta(
-    calcDeltaPercent(selectedRow?.totalAmount, prevRow?.totalAmount),
+    comparable ? calcDeltaPercent(selectedRow.totalAmount, prevRow.totalAmount) : null,
   );
   const orderDelta = formatDelta(
-    calcDeltaPercent(selectedRow?.orderCount, prevRow?.orderCount),
+    comparable ? calcDeltaPercent(selectedRow.orderCount, prevRow.orderCount) : null,
   );
   const avgDelta = formatDelta(
-    calcDeltaPercent(selectedRow?.avgAmount, prevRow?.avgAmount),
+    comparable ? calcDeltaPercent(selectedRow.avgAmount, prevRow.avgAmount) : null,
   );
 
   const canGoPrev = Boolean(prevDate && prevDate >= CALENDAR_MIN);
@@ -163,6 +155,17 @@ export default function DailySalesPage() {
         title="일별 매출을 불러오지 못했습니다"
         description={error?.message || "잠시 후 다시 시도해 주세요."}
         onRetry={refetch}
+      />
+    );
+  }
+  if (monthStatus === "error") {
+    return (
+      <AdminAsyncState
+        status="error"
+        layout="page"
+        title="월간 매출을 불러오지 못했습니다"
+        description={monthError?.message || "잠시 후 다시 시도해 주세요."}
+        onRetry={refetchMonth}
       />
     );
   }

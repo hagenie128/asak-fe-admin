@@ -1,5 +1,5 @@
 /* SCR-020 / Monthly Sales */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import AdminAsyncState from "../../components/admin/shared/AdminAsyncState.jsx";
 import AdminTopHeader from "../../components/admin/shared/AdminTopHeader.jsx";
 import AdminDatePicker from "../../components/admin/shared/AdminDatePicker.jsx";
@@ -14,7 +14,6 @@ import {
   formatMonthlyNavLabel,
   startOfMonthYmd,
   toBarHeights,
-  tomorrowYmd,
   toYearMonthKey,
   weekdayLabel,
 } from "../../utils/salesDisplay.js";
@@ -23,7 +22,6 @@ export default function MonthlySalesPage() {
   const today = todayYmd();
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [month, setMonth] = useState(() => new Date().getMonth() + 1);
-  const [monthReady, setMonthReady] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const monthKey = toYearMonthKey(year, month);
   const monthEndFull = endOfMonthYmd(year, month);
@@ -40,7 +38,7 @@ export default function MonthlySalesPage() {
     year,
     month,
   });
-  const { data: dailyData, status: dailyStatus } = useSalesQuery({
+  const { data: dailyData, status: dailyStatus, error: dailyError, refetch: refetchDaily } = useSalesQuery({
     mode: "daily",
     from: dailyFrom,
     to: dailyTo,
@@ -49,38 +47,22 @@ export default function MonthlySalesPage() {
   const baseYear = monthlyData?.year ?? new Date().getFullYear();
   const label = formatMonthlyNavLabel(year, month, baseYear);
 
-  useEffect(() => {
-    if (monthReady || monthlyStatus !== "success") return;
-    const currentRow = (monthlyData?.rows ?? []).find((row) => row.month === monthKey);
-    if (!currentRow?.totalAmount) {
-      const lastWithSales = [...(monthlyData?.rows ?? [])]
-        .reverse()
-        .find((row) => (row.totalAmount ?? 0) > 0);
-      if (lastWithSales?.month) {
-        const [y, m] = lastWithSales.month.split("-").map(Number);
-        setYear(y);
-        setMonth(m);
-      }
-    }
-    setMonthReady(true);
-  }, [monthReady, monthlyData, monthlyStatus, monthKey]);
-
   const monthRow = useMemo(() => {
     return (monthlyData?.rows ?? []).find((row) => row.month === monthKey) ?? null;
   }, [monthlyData, monthKey]);
 
   const monthDays = useMemo(() => {
-    return fillDailyRows(dailyData?.rows, dailyFrom, monthEndFull, {
-      dummyThrough: tomorrowYmd(),
-      today,
-    });
+    return fillDailyRows(dailyData?.rows, dailyFrom, monthEndFull, { today });
   }, [dailyData, dailyFrom, monthEndFull, today]);
+  const dataDays = useMemo(() => monthDays.filter((row) => row.hasData), [monthDays]);
 
   const salesValues = monthDays.map((row) => (row.isFuture ? 0 : row.totalAmount));
   const orderValues = monthDays.map((row) => (row.isFuture ? 0 : row.orderCount));
   const salesBars = toBarHeights(salesValues, 70);
   const orderBars = toBarHeights(orderValues, 40);
-  const peakIndex = findMaxIndex(salesValues);
+  const peakIndex = dataDays.length
+    ? findMaxIndex(monthDays.map((row) => (row.hasData ? row.totalAmount : -Infinity)))
+    : -1;
   const peakRow = peakIndex >= 0 ? monthDays[peakIndex] : null;
 
   const ranking = (monthlyData?.ranking?.[monthKey] ?? []).slice(0, 5);
@@ -90,7 +72,7 @@ export default function MonthlySalesPage() {
     let weekdayCount = 0;
     let weekendSum = 0;
     let weekendCount = 0;
-    monthDays.forEach((row) => {
+    dataDays.forEach((row) => {
       const d = new Date(`${row.date}T00:00:00`);
       const day = d.getDay();
       const isWeekend = day === 0 || day === 6;
@@ -115,15 +97,15 @@ export default function MonthlySalesPage() {
       weekdayWidth: `${Math.round((weekdayAvg / maxAvg) * 100)}%`,
       weekendWidth: `${Math.round((weekendAvg / maxAvg) * 100)}%`,
     };
-  }, [monthDays]);
+  }, [dataDays]);
 
-  const avgOrderCount = monthDays.length
+  const avgOrderCount = dataDays.length
     ? Math.round(
-        monthDays.reduce((sum, row) => sum + row.orderCount, 0) / monthDays.length
+        dataDays.reduce((sum, row) => sum + row.orderCount, 0) / dataDays.length
       )
     : 0;
 
-  const detailRows = [...monthDays].reverse().slice(0, 8);
+  const detailRows = [...dataDays].reverse().slice(0, 8);
 
   const handlePrevMonth = () => {
     if (month === 1) {
@@ -147,7 +129,7 @@ export default function MonthlySalesPage() {
     setMonth((m) => m + 1);
   };
 
-  if (monthlyStatus === "loading" || monthlyStatus === "idle") {
+  if (monthlyStatus === "loading" || monthlyStatus === "idle" || dailyStatus === "loading" || dailyStatus === "idle") {
     return <AdminAsyncState status="loading" layout="page" />;
   }
   if (monthlyStatus === "error") {
@@ -158,6 +140,17 @@ export default function MonthlySalesPage() {
         title="월별 매출을 불러오지 못했습니다"
         description={error?.message || "잠시 후 다시 시도해 주세요."}
         onRetry={refetch}
+      />
+    );
+  }
+  if (dailyStatus === "error") {
+    return (
+      <AdminAsyncState
+        status="error"
+        layout="page"
+        title="일별 매출을 불러오지 못했습니다"
+        description={dailyError?.message || "잠시 후 다시 시도해 주세요."}
+        onRetry={refetchDaily}
       />
     );
   }

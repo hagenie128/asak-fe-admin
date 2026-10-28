@@ -72,13 +72,13 @@ export default function SalesSummaryPage() {
     [allDailyRows, activePeriod, today, customRange],
   );
 
-  /** KPI·표는 미래일 제외. 차트는 기간 전체(오늘 포함, 말일까지 플레이스홀더). */
-  const kpiRows = useMemo(() => periodRows.filter((row) => !row.isFuture), [periodRows]);
+  /** 차트는 빈 날짜를 0으로 표시하고, 통계·상세 표는 API에 존재한 날짜만 사용한다. */
+  const kpiRows = useMemo(() => periodRows.filter((row) => row.hasData), [periodRows]);
 
   const salesAvailableDates = useMemo(
     () =>
       allDailyRows
-        .filter((row) => !row.isFuture && !row.isDummy && Number(row.totalAmount) > 0)
+        .filter((row) => row.hasData)
         .map((row) => row.date),
     [allDailyRows],
   );
